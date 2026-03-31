@@ -13,11 +13,13 @@ You are given a project made up of **n activities** that need to be scheduled. E
 - **n real activities**, numbered `1` to `n`
 - **2 dummy activities**: activity `0` (project start) and activity `n+1` (project end), both with zero duration and zero resource usage
 
-### Precedence Constraints
+### Precedence Constraints (Time Lags)
 
-- A set of directed edges forming a **DAG** (Directed Acyclic Graph)
-- If there is an edge `i -> j`, then activity `j` cannot start until activity `i` has **completely finished**
-- Formally: `S_j >= S_i + d_i`
+- The data file lists **temporal relations** between activities, each with a **lag value `L`**
+- For an edge `i -> j` with lag `L`, the constraint is: `S_j >= S_i + L`
+- **Negative lags** (`L < 0`): not real dependencies — skip these edges entirely (they are always satisfied)
+- **Non-negative lags** (`L >= 0`): real constraints that must be enforced
+- Note: the lag `L` is **not the same as the duration** `d_i`. The lag comes from the brackets in the successor table; the duration comes from the resource table. They are independent values.
 
 ### Resources
 
@@ -122,11 +124,18 @@ activity_id  1  num_successors  succ_1  succ_2  ...  [lag_1]  [lag_2]  ...
 | `1` | Number of modes (always 1 for single-mode RCPSP) |
 | `num_successors` | How many activities directly follow this one |
 | `succ_1, succ_2, ...` | The IDs of successor activities |
-| `[lag_1], [lag_2], ...` | Time lags in brackets (can be ignored for basic RCPSP; the key info is which activities are successors) |
+| `[lag_1], [lag_2], ...` | Time lags in brackets — each lag pairs with the corresponding successor. **These matter.** |
 
 **Example:** Line `1  1  4  9  7  8  10  [9]  [1]  [8]  [2]` means:
 - Activity `1` has **4 successors**: activities `9`, `7`, `8`, `10`
-- This means: `1 -> 9`, `1 -> 7`, `1 -> 8`, `1 -> 10` (activity 1 must finish before any of these can start)
+- With lags: `1 -> 9` (lag 9), `1 -> 7` (lag 1), `1 -> 8` (lag 8), `1 -> 10` (lag 2)
+- Constraints: `S_9 >= S_1 + 9`, `S_7 >= S_1 + 1`, `S_8 >= S_1 + 8`, `S_10 >= S_1 + 2`
+
+**Negative lags:** Line `8  1  3  1  2  11  [-22]  [-34]  [2]` means:
+- Activity `8` has 3 successors: `1`, `2`, `11` with lags `-22`, `-34`, `2`
+- `8 -> 1` (lag -22): **skip** — negative lag, not a real dependency
+- `8 -> 2` (lag -34): **skip** — negative lag
+- `8 -> 11` (lag 2): **enforce** `S_11 >= S_8 + 2`
 
 The last activity (`11`) has `0` successors (it is the dummy end node).
 
@@ -161,21 +170,21 @@ The maximum available units for each resource type. Here all 5 resources have a 
 
 ## Parsed Example: PSP1.SCH (J10)
 
-### Precedence Graph (DAG)
+### Precedence Graph (only edges with non-negative lags)
 
 ```
-Activity 0 (start) -> 4, 2, 1, 3
-Activity 1             -> 9, 7, 8, 10
-Activity 2             -> 8
-Activity 3             -> 10, 7
-Activity 4             -> 10, 9, 5
-Activity 5             -> 6
-Activity 6             -> 11
-Activity 7             -> 11
-Activity 8             -> 1, 2, 11
-Activity 9             -> 11
-Activity 10            -> 11
-Activity 11 (end)      -> (none)
+Activity 0 (start) -> 4 [0], 2 [0], 1 [0], 3 [0]
+Activity 1         -> 9 [9], 7 [1], 8 [8], 10 [2]
+Activity 2         -> 8 [24]
+Activity 3         -> 10 [4], 7 [8]
+Activity 4         -> 10 [0], 9 [0], 5 [7]
+Activity 5         -> 6 [0]
+Activity 6         -> 11 [5]
+Activity 7         -> 11 [10]
+Activity 8         -> 11 [2]          (edges to 1 and 2 skipped: negative lags)
+Activity 9         -> 11 [6]
+Activity 10        -> 11 [1]
+Activity 11 (end)  -> (none)
 ```
 
 ### Activity Table
@@ -204,57 +213,35 @@ Activity 11 (end)      -> (none)
 Your program should output the **start time** for each activity. A valid schedule for the above example:
 
 ```
-Activity  0: Start =  0  (duration 0, finishes at  0)
-Activity  1: Start =  0  (duration 3, finishes at  3)
-Activity  2: Start =  3  (duration 10, finishes at 13)
-Activity  3: Start =  0  (duration 3, finishes at  3)
-Activity  4: Start =  0  (duration 3, finishes at  3)
-Activity  5: Start =  3  (duration 3, finishes at  6)
-Activity  6: Start =  6  (duration 5, finishes at 11)
-Activity  7: Start =  3  (duration 10, finishes at 13)
-Activity  8: Start = 13  (duration 2, finishes at 15)
-Activity  9: Start =  3  (duration 6, finishes at  9)
-Activity 10: Start =  3  (duration 1, finishes at  4)
-Activity 11: Start = 15  (duration 0, finishes at 15)
+Activity  0: Start =  0  (duration  0, finishes at  0)
+Activity  1: Start =  0  (duration  3, finishes at  3)
+Activity  2: Start =  0  (duration 10, finishes at 10)
+Activity  3: Start =  3  (duration  3, finishes at  6)
+Activity  4: Start =  0  (duration  3, finishes at  3)
+Activity  5: Start =  7  (duration  3, finishes at 10)
+Activity  6: Start = 10  (duration  5, finishes at 15)
+Activity  7: Start =  8  (duration 10, finishes at 18)
+Activity  8: Start = 24  (duration  2, finishes at 26)
+Activity  9: Start =  9  (duration  6, finishes at 15)
+Activity 10: Start =  4  (duration  1, finishes at  5)
+Activity 11: Start = 26  (duration  0, finishes at 26)
 
-Makespan (C_max) = 15
+Makespan (C_max) = 26
 ```
 
 ### Verifying the Schedule
 
-**Precedence check** (every successor starts after its predecessor finishes):
-- `0 -> 1`: S_1=0 >= S_0+d_0 = 0+0 = 0 ✓
-- `0 -> 2`: S_2=3 >= 0+0 = 0 ✓
-- `1 -> 7`: S_7=3 >= S_1+d_1 = 0+3 = 3 ✓
-- `1 -> 8`: S_8=13 >= 0+3 = 3 ✓
-- `2 -> 8`: S_8=13 >= S_2+d_2 = 3+10 = 13 ✓
-- ... (and so on for every edge in the DAG)
+**Precedence check** (for every edge `i -> j` with lag `L >= 0`, verify `S_j >= S_i + L`):
+- `0 -> 1` (lag 0): S_1=0 >= S_0 + 0 = 0 ✓
+- `0 -> 4` (lag 0): S_4=0 >= S_0 + 0 = 0 ✓
+- `1 -> 9` (lag 9): S_9=9 >= S_1 + 9 = 0+9 = 9 ✓
+- `1 -> 8` (lag 8): S_8=24 >= S_1 + 8 = 0+8 = 8 ✓
+- `2 -> 8` (lag 24): S_8=24 >= S_2 + 24 = 0+24 = 24 ✓
+- ... (and so on for every edge with non-negative lag)
 
-**Resource check at time t=0** (activities running: 1, 3, 4):
-- R1: 4+4+0 = 8 > 5 **VIOLATION** — this example would actually be infeasible at t=0!
+**Resource check at each time step** — at every time `t`, sum up resource usage from all running activities and verify it doesn't exceed capacity.
 
-This illustrates why you cannot simply start everything as early as possible based only on precedence. **Resource conflicts force you to delay some activities**, which is what makes this problem hard.
-
-A **corrected valid schedule** might look like:
-
-```
-Activity  0: Start =  0
-Activity  1: Start =  0  (uses R1=4)
-Activity  2: Start =  3
-Activity  3: Start =  3  (delayed to avoid R1 conflict with activity 1)
-Activity  4: Start =  0  (uses R4=3, no conflict with activity 1)
-Activity  5: Start =  6
-Activity  6: Start =  9
-Activity  7: Start =  6
-Activity  8: Start = 16
-Activity  9: Start =  6
-Activity 10: Start =  6
-Activity 11: Start = 18
-
-Makespan (C_max) = 18
-```
-
-The goal is to find the schedule with the **smallest possible makespan** while respecting both precedence and resource constraints.
+The goal is to find the schedule with the **smallest possible makespan** while respecting both precedence (lag) and resource constraints.
 
 ---
 
