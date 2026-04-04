@@ -4,7 +4,7 @@ PERSON 4: Validator & Testing
 this module checks if a schedule is actually valid — no cheating lah.
 
 two things to verify:
-  1. precedence: for every edge i->j with lag L, S_j >= S_i + L
+  1. precedence: for every edge i->j, S_j >= S_i + d_i
   2. resources: at every time step t, total resource usage <= capacity
 
 also handles batch testing across all instances.
@@ -17,8 +17,8 @@ from models import Project
 def check_precedence(project, schedule):
     """
     check all precedence constraints.
-    for each edge i -> j with lag L (non-negative only since we filtered during parsing):
-        S_j must be >= S_i + L
+    for each edge i -> j:
+        S_j must be >= S_i + d_i
 
     returns a list of violation strings. empty list = all good.
     """
@@ -26,11 +26,12 @@ def check_precedence(project, schedule):
 
     # TODO: implement
     # for act_id in project.all_ids():
-    #     for (succ_id, lag) in project.successors[act_id]:
-    #         if schedule[succ_id] < schedule[act_id] + lag:
+    #     act = project.activities[act_id]
+    #     for succ_id in project.successors[act_id]:
+    #         if schedule[succ_id] < schedule[act_id] + act.duration:
     #             violations.append(
     #                 f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
-    #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+{lag}={schedule[act_id]+lag}"
+    #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
     #             )
 
     return violations

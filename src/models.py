@@ -18,8 +18,8 @@ class Project:
     n: int              # num of real activities (not counting the dummy start/end)
     k: int              # num of resource types
     activities: dict    # activity_id -> Activity obj
-    successors: dict    # activity_id -> list of (successor_id, lag)
-    predecessors: dict  # activity_id -> list of (predecessor_id, lag)
+    successors: dict    # activity_id -> list of successor_ids
+    predecessors: dict  # activity_id -> list of predecessor_ids
     capacities: list    # max units for each resource type
 
     def all_ids(self):

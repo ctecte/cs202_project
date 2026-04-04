@@ -65,7 +65,7 @@ def find_earliest_start(project, activity_id, schedule, tracker):
     find the earliest time we can start this activity.
 
     step 1: compute the earliest time based on predecessors
-            (for each pred with lag L: earliest >= S_pred + L)
+            (for each pred: earliest >= S_pred + d_pred)
 
     step 2: from that time onwards, scan forward until resources
             are available for the full duration
@@ -77,8 +77,9 @@ def find_earliest_start(project, activity_id, schedule, tracker):
     # step 1: precedence constraint
     # TODO: compute earliest based on all predecessors
     # earliest = 0
-    # for (pred_id, lag) in project.predecessors[activity_id]:
-    #     earliest = max(earliest, schedule[pred_id] + lag)
+    # for pred_id in project.predecessors[activity_id]:
+    #     pred = project.activities[pred_id]
+    #     earliest = max(earliest, schedule[pred_id] + pred.duration)
 
     earliest = 0  # placeholder
 

@@ -40,16 +40,14 @@ you're the first one to finish because everyone depends on your output.
 
 **tasks:**
 1. parse the header line (n and K)
-2. parse the successor table — extract successor ids and lag values from brackets
-3. filter out edges with negative lags (those aren't real dependencies)
-4. build the successors dict AND predecessors dict (reverse the edges)
-5. parse the duration/resource table into Activity objects
-6. parse the last line for resource capacities
-7. test on PSP1.SCH — print everything out and manually verify against OVERVIEW.md
-8. test on ALL 270 j10 files to make sure nothing crashes
+2. parse the successor table — extract activity id and list of successor ids
+3. build the successors dict AND predecessors dict (reverse the edges)
+4. parse the duration/resource table into Activity objects
+5. parse the last line for resource capacities
+6. test on PSP1.SCH — print everything out and manually verify against OVERVIEW.md
+7. test on ALL 270 j10 files to make sure nothing crashes
 
 **things to watch out for:**
-- the bracket values can be negative like [-22] — use regex or string ops to handle
 - make sure predecessors dict is built correctly (reverse of successors)
 - activities 0 and n+1 are dummies — they should have duration 0 and all-zero resources
 
@@ -75,7 +73,7 @@ this is the core engine — given an ordering of activities, produce a valid sch
 ```
 schedule activity 0 at time 0
 for each activity in the given order:
-    earliest = max(S_pred + lag) over all predecessors
+    earliest = max(S_pred + d_pred) over all predecessors
     while resources not available at earliest:
         earliest += 1
     schedule activity at earliest
@@ -147,7 +145,7 @@ make sure our schedules are actually correct.
 also build the testing infrastructure to run on all instances.
 
 **tasks:**
-1. implement `check_precedence()` — verify S_j >= S_i + L for all edges
+1. implement `check_precedence()` — verify S_j >= S_i + d_i for all edges
 2. implement `check_resources()` — verify resource usage <= capacity at every time step
 3. implement `validate()` — combine both checks
 4. implement `test_all_instances()` — batch test on a folder of .SCH files

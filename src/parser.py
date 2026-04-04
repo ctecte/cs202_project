@@ -5,13 +5,12 @@ read .SCH files and build the Project object
 see OVERVIEW.md for the full format breakdown
 
 the file has 3 parts:
-  1) header line: n, K, 0, 0
+  1) header line: n, K
   2) successor table (n+2 lines, one per activity 0..n+1)
   3) duration + resource table (n+2 lines again)
   4) last line: resource capacities
 """
 
-import re
 from models import Activity, Project
 
 
@@ -19,11 +18,12 @@ def parse(filepath):
     """
     main parse function — give it a .SCH file path, get back a Project.
 
-    the tricky part is the successor lines. each line looks like:
-        activity_id  1  num_successors  succ1  succ2  ...  [lag1]  [lag2]  ...
+    format is straightforward now:
+      successor line: activity_id  num_successors  succ1  succ2  ...
+      resource line:  activity_id  duration  r1  r2  ...  rK
 
-    stuff in brackets are the lag values. negative lag = not a real dependency,
-    just skip those edges. positive/zero lag = real constraint (S_j >= S_i + L).
+    no more lag values or brackets — just simple finish-to-start precedence.
+    if i -> j, then S_j >= S_i + d_i.
     """
 
     with open(filepath, 'r') as f:
@@ -33,7 +33,7 @@ def parse(filepath):
     lines = [l.strip() for l in lines if l.strip()]
 
     # --- HEADER ---
-    # first line: n K 0 0
+    # first line: n K
     header = lines[0].split()
     n = int(header[0])
     k = int(header[1])
@@ -42,19 +42,15 @@ def parse(filepath):
 
     # --- SUCCESSOR TABLE ---
     # next (n+2) lines, one per activity
+    # each line: activity_id  num_successors  succ1  succ2  ...
+    #
     # TODO: parse each line to extract:
     #   - activity id
-    #   - list of successors
-    #   - list of lag values (the numbers inside [ ])
-    #   - only keep edges where lag >= 0
-    #
-    # hint: you can use something like re.findall(r'\[(-?\d+)\]', line)
-    #       to pull out all the bracket values
-    #       then the remaining numbers (before the brackets) give you
-    #       activity_id, num_modes(1), num_successors, succ1, succ2, ...
+    #   - list of successor ids
+    #   - build both successors and predecessors dicts
 
-    successors = {}   # activity_id -> [(succ_id, lag), ...]
-    predecessors = {}  # activity_id -> [(pred_id, lag), ...]
+    successors = {}    # activity_id -> [succ_id, ...]
+    predecessors = {}  # activity_id -> [pred_id, ...]
 
     # init empty lists first
     for i in range(total_activities):
@@ -65,16 +61,19 @@ def parse(filepath):
         line = lines[line_idx]
 
         # TODO: parse this line
-        # 1. extract lag values from brackets
-        # 2. remove bracket portions to get the plain numbers
-        # 3. plain numbers = [activity_id, 1, num_succ, succ1, succ2, ...]
-        # 4. pair each successor with its lag
-        # 5. if lag >= 0, add to successors and predecessors dicts
+        # tokens = line.split()
+        # activity_id = int(tokens[0])
+        # num_succ = int(tokens[1])
+        # succs = [int(tokens[2 + j]) for j in range(num_succ)]
+        #
+        # successors[activity_id] = succs
+        # for s in succs:
+        #     predecessors[s].append(activity_id)
         pass
 
     # --- DURATION + RESOURCE TABLE ---
     # next (n+2) lines after the successor table
-    # each line: activity_id  1  duration  r1  r2  ...  rK
+    # each line: activity_id  duration  r1  r2  ...  rK
     #
     # TODO: parse each line and create Activity objects
 
@@ -86,8 +85,8 @@ def parse(filepath):
         # TODO: parse this line
         # tokens = line.split()
         # activity_id = int(tokens[0])
-        # duration = int(tokens[2])       # tokens[1] is always 1 (mode)
-        # resources = [int(x) for x in tokens[3:]]
+        # duration = int(tokens[1])
+        # resources = [int(x) for x in tokens[2:]]
         # activities[activity_id] = Activity(id=activity_id, duration=duration, resources=resources)
         pass
 

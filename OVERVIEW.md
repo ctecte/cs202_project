@@ -13,13 +13,11 @@ You are given a project made up of **n activities** that need to be scheduled. E
 - **n real activities**, numbered `1` to `n`
 - **2 dummy activities**: activity `0` (project start) and activity `n+1` (project end), both with zero duration and zero resource usage
 
-### Precedence Constraints (Time Lags)
+### Precedence Constraints
 
-- The data file lists **temporal relations** between activities, each with a **lag value `L`**
-- For an edge `i -> j` with lag `L`, the constraint is: `S_j >= S_i + L`
-- **Negative lags** (`L < 0`): not real dependencies — skip these edges entirely (they are always satisfied)
-- **Non-negative lags** (`L >= 0`): real constraints that must be enforced
-- Note: the lag `L` is **not the same as the duration** `d_i`. The lag comes from the brackets in the successor table; the duration comes from the resource table. They are independent values.
+- A set of directed edges forming a **DAG** (Directed Acyclic Graph)
+- If there is an edge `i -> j`, then activity `j` cannot start until activity `i` has **completely finished**
+- Formally: `S_j >= S_i + d_i`
 
 ### Resources
 
@@ -50,7 +48,7 @@ Find a start time `S_i` for each activity that:
 
 ## Dataset
 
-Two benchmark sets from [PSPLIB](http://www.om-db.wi.tum.de/psplib/), in the `ProGenMax` format:
+Two benchmark sets from [PSPLIB](http://www.om-db.wi.tum.de/psplib/):
 
 | Folder    | Activities per instance | Number of instances |
 |-----------|------------------------|---------------------|
@@ -68,45 +66,44 @@ Each `.SCH` file has three sections. Here is `PSP1.SCH` from `sm_j10/` as a work
 ### Raw File Content
 
 ```
-10	5	0	0
-0	1	4	4	2	1	3	[0]	[0]	[0]	[0]
-1	1	4	9	7	8	10	[9]	[1]	[8]	[2]
-2	1	1	8	[24]
-3	1	2	10	7	[4]	[8]
-4	1	3	10	9	5	[0]	[0]	[7]
-5	1	1	6	[0]
-6	1	1	11	[5]
-7	1	1	11	[10]
-8	1	3	1	2	11	[-22]	[-34]	[2]
-9	1	1	11	[6]
-10	1	1	11	[1]
-11	1	0
-0	1	0	0	0	0	0	0
-1	1	3	4	1	0	0	0
-2	1	10	1	0	3	0	0
-3	1	3	4	0	2	2	3
-4	1	3	0	0	0	3	0
-5	1	3	0	1	2	4	0
-6	1	5	2	3	4	0	0
-7	1	10	0	4	4	0	4
-8	1	2	2	0	0	4	4
-9	1	6	5	0	0	1	1
-10	1	1	0	1	0	0	0
-11	1	0	0	0	0	0	0
+10	5
+0	4	4	2	1	3
+1	4	9	7	8	10
+2	1	8
+3	2	10	7
+4	3	10	9	5
+5	1	6
+6	1	11
+7	1	11
+8	1	11
+9	1	11
+10	1	11
+11	0
+0	0	0	0	0	0	0
+1	3	4	1	0	0	0
+2	10	1	0	3	0	0
+3	3	4	0	2	2	3
+4	3	0	0	0	3	0
+5	3	0	1	2	4	0
+6	5	2	3	4	0	0
+7	10	0	4	4	0	4
+8	2	2	0	0	4	4
+9	6	5	0	0	1	1
+10	1	0	1	0	0	0
+11	0	0	0	0	0	0
 5	5	5	5	5
 ```
 
 ### Section 1: Header (Line 1)
 
 ```
-10  5  0  0
+10  5
 ```
 
 | Field | Meaning |
 |-------|---------|
 | `10`  | Number of real activities (`n`) |
 | `5`   | Number of resource types (`K`) |
-| `0 0` | Unused (can be ignored) |
 
 Total activities including dummies: `n + 2 = 12` (numbered `0` to `11`)
 
@@ -115,27 +112,19 @@ Total activities including dummies: `n + 2 = 12` (numbered `0` to `11`)
 One line per activity, from activity `0` to activity `n+1`:
 
 ```
-activity_id  1  num_successors  succ_1  succ_2  ...  [lag_1]  [lag_2]  ...
+activity_id  num_successors  succ_1  succ_2  ...
 ```
 
 | Field | Meaning |
 |-------|---------|
 | `activity_id` | The activity number |
-| `1` | Number of modes (always 1 for single-mode RCPSP) |
 | `num_successors` | How many activities directly follow this one |
 | `succ_1, succ_2, ...` | The IDs of successor activities |
-| `[lag_1], [lag_2], ...` | Time lags in brackets — each lag pairs with the corresponding successor. **These matter.** |
 
-**Example:** Line `1  1  4  9  7  8  10  [9]  [1]  [8]  [2]` means:
+**Example:** Line `1  4  9  7  8  10` means:
 - Activity `1` has **4 successors**: activities `9`, `7`, `8`, `10`
-- With lags: `1 -> 9` (lag 9), `1 -> 7` (lag 1), `1 -> 8` (lag 8), `1 -> 10` (lag 2)
-- Constraints: `S_9 >= S_1 + 9`, `S_7 >= S_1 + 1`, `S_8 >= S_1 + 8`, `S_10 >= S_1 + 2`
-
-**Negative lags:** Line `8  1  3  1  2  11  [-22]  [-34]  [2]` means:
-- Activity `8` has 3 successors: `1`, `2`, `11` with lags `-22`, `-34`, `2`
-- `8 -> 1` (lag -22): **skip** — negative lag, not a real dependency
-- `8 -> 2` (lag -34): **skip** — negative lag
-- `8 -> 11` (lag 2): **enforce** `S_11 >= S_8 + 2`
+- Precedence: `1 -> 9`, `1 -> 7`, `1 -> 8`, `1 -> 10`
+- Constraints: `S_9 >= S_1 + d_1`, `S_7 >= S_1 + d_1`, etc.
 
 The last activity (`11`) has `0` successors (it is the dummy end node).
 
@@ -144,17 +133,16 @@ The last activity (`11`) has `0` successors (it is the dummy end node).
 One line per activity, from activity `0` to activity `n+1`:
 
 ```
-activity_id  1  duration  r_1  r_2  r_3  ...  r_K
+activity_id  duration  r_1  r_2  r_3  ...  r_K
 ```
 
 | Field | Meaning |
 |-------|---------|
 | `activity_id` | The activity number |
-| `1` | Mode (always 1) |
 | `duration` | How many time units the activity takes |
 | `r_1 ... r_K` | Units of each resource required during the entire execution |
 
-**Example:** `7  1  10  0  4  4  0  4` means:
+**Example:** `7  10  0  4  4  0  4` means:
 - Activity `7` has duration **10**
 - Requires: 0 of R1, 4 of R2, 4 of R3, 0 of R4, 4 of R5
 
@@ -170,20 +158,20 @@ The maximum available units for each resource type. Here all 5 resources have a 
 
 ## Parsed Example: PSP1.SCH (J10)
 
-### Precedence Graph (only edges with non-negative lags)
+### Precedence Graph (DAG)
 
 ```
-Activity 0 (start) -> 4 [0], 2 [0], 1 [0], 3 [0]
-Activity 1         -> 9 [9], 7 [1], 8 [8], 10 [2]
-Activity 2         -> 8 [24]
-Activity 3         -> 10 [4], 7 [8]
-Activity 4         -> 10 [0], 9 [0], 5 [7]
-Activity 5         -> 6 [0]
-Activity 6         -> 11 [5]
-Activity 7         -> 11 [10]
-Activity 8         -> 11 [2]          (edges to 1 and 2 skipped: negative lags)
-Activity 9         -> 11 [6]
-Activity 10        -> 11 [1]
+Activity 0 (start) -> 4, 2, 1, 3
+Activity 1         -> 9, 7, 8, 10
+Activity 2         -> 8
+Activity 3         -> 10, 7
+Activity 4         -> 10, 9, 5
+Activity 5         -> 6
+Activity 6         -> 11
+Activity 7         -> 11
+Activity 8         -> 11
+Activity 9         -> 11
+Activity 10        -> 11
 Activity 11 (end)  -> (none)
 ```
 
@@ -218,30 +206,30 @@ Activity  1: Start =  0  (duration  3, finishes at  3)
 Activity  2: Start =  0  (duration 10, finishes at 10)
 Activity  3: Start =  3  (duration  3, finishes at  6)
 Activity  4: Start =  0  (duration  3, finishes at  3)
-Activity  5: Start =  7  (duration  3, finishes at 10)
-Activity  6: Start = 10  (duration  5, finishes at 15)
-Activity  7: Start =  8  (duration 10, finishes at 18)
-Activity  8: Start = 24  (duration  2, finishes at 26)
-Activity  9: Start =  9  (duration  6, finishes at 15)
-Activity 10: Start =  4  (duration  1, finishes at  5)
-Activity 11: Start = 26  (duration  0, finishes at 26)
+Activity  5: Start =  3  (duration  3, finishes at  6)
+Activity  6: Start =  6  (duration  5, finishes at 11)
+Activity  7: Start = 10  (duration 10, finishes at 20)
+Activity  8: Start = 10  (duration  2, finishes at 12)
+Activity  9: Start =  3  (duration  6, finishes at  9)
+Activity 10: Start =  3  (duration  1, finishes at  4)
+Activity 11: Start = 20  (duration  0, finishes at 20)
 
-Makespan (C_max) = 26
+Makespan (C_max) = 20
 ```
 
 ### Verifying the Schedule
 
-**Precedence check** (for every edge `i -> j` with lag `L >= 0`, verify `S_j >= S_i + L`):
-- `0 -> 1` (lag 0): S_1=0 >= S_0 + 0 = 0 ✓
-- `0 -> 4` (lag 0): S_4=0 >= S_0 + 0 = 0 ✓
-- `1 -> 9` (lag 9): S_9=9 >= S_1 + 9 = 0+9 = 9 ✓
-- `1 -> 8` (lag 8): S_8=24 >= S_1 + 8 = 0+8 = 8 ✓
-- `2 -> 8` (lag 24): S_8=24 >= S_2 + 24 = 0+24 = 24 ✓
-- ... (and so on for every edge with non-negative lag)
+**Precedence check** (for every edge `i -> j`, verify `S_j >= S_i + d_i`):
+- `0 -> 1`: S_1=0 >= S_0 + d_0 = 0+0 = 0 ✓
+- `0 -> 4`: S_4=0 >= S_0 + d_0 = 0+0 = 0 ✓
+- `1 -> 9`: S_9=3 >= S_1 + d_1 = 0+3 = 3 ✓
+- `1 -> 8`: S_8=10 >= S_1 + d_1 = 0+3 = 3 ✓
+- `2 -> 8`: S_8=10 >= S_2 + d_2 = 0+10 = 10 ✓
+- ... (and so on for every edge in the DAG)
 
 **Resource check at each time step** — at every time `t`, sum up resource usage from all running activities and verify it doesn't exceed capacity.
 
-The goal is to find the schedule with the **smallest possible makespan** while respecting both precedence (lag) and resource constraints.
+The goal is to find the schedule with the **smallest possible makespan** while respecting both precedence and resource constraints.
 
 ---
 

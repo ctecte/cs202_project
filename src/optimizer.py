@@ -48,7 +48,7 @@ def random_activity_list(project):
     #         if act_id in placed:
     #             continue
     #         # check if all predecessors are placed
-    #         all_preds_done = all(pred_id in placed for (pred_id, lag) in project.predecessors[act_id])
+    #         all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
     #         if all_preds_done:
     #             eligible.append(act_id)
     #
@@ -69,7 +69,7 @@ def is_precedence_feasible(project, activity_list):
     # TODO: implement
     # position = {act: idx for idx, act in enumerate(activity_list)}
     # for act in activity_list:
-    #     for (succ_id, lag) in project.successors[act]:
+    #     for succ_id in project.successors[act]:
     #         if succ_id == project.n + 1:  # skip dummy end
     #             continue
     #         if position[act] >= position[succ_id]:
