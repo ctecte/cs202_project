@@ -1,17 +1,5 @@
 # CS202 Project: Resource-Constrained Project Scheduling (RCPSP) Solver
 
-## Team Members
-
-| Name | Student ID |
-|------|-----------|
-| TODO | TODO |
-| TODO | TODO |
-| TODO | TODO |
-| TODO | TODO |
-| TODO | TODO |
-
----
-
 ## What Does This Program Do?
 
 Imagine you have a bunch of tasks (like building a house: lay foundation, put up walls, install plumbing, paint, etc.). Some tasks can't start until other tasks are done (you can't paint walls before the walls exist). On top of that, you have limited workers and equipment — so you can't do everything at once.
