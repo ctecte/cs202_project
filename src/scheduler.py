@@ -1,16 +1,6 @@
 """
-PERSON 2: Scheduler (SSGS + priority rules)
-=============================================
-this is the core scheduling engine.
-
-main algorithm: Serial Schedule Generation Scheme (SSGS)
-basically we schedule one activity at a time, in some priority order.
-for each activity, we find the earliest time it can start without
-violating precedence or resource constraints.
-
-the "priority order" is given as an activity list — a permutation
-of activity ids that respects precedence. the optimizer (person 3)
-will try different orderings to find the best makespan.
+Scheduler: SSGS (Serial Schedule Generation Scheme) + priority rules.
+Optimized for speed — SSGS is called thousands of times during optimization.
 """
 
 from models import Project, Activity
@@ -18,185 +8,289 @@ from models import Project, Activity
 
 class ResourceTracker:
     """
-    keeps track of how much resource is being used at each time step.
-    when we schedule an activity, we "book" resources for its duration.
-    then we can check if there's enough capacity before scheduling the next one.
+    Tracks resource usage at each time step.
+    Maintains a sorted set of 'event times' (when activities start/finish)
+    so we can jump to relevant times instead of scanning +1.
     """
 
     def __init__(self, capacities):
         self.capacities = capacities
         self.k = len(capacities)
-        # usage[t] = [amount used of R1, R2, ..., RK at time t]
-        # using a dict so we don't need to preallocate — time steps are sparse
-        self.usage = {}
+        self.usage = {}  # t -> [r1, r2, ..., rk]
+        self.finish_times = set()  # times when any activity finishes
 
-    def is_feasible(self, activity, start_time):
+    def is_feasible(self, resources, start_time, duration):
         """
-        check if we can schedule this activity starting at start_time
-        without exceeding any resource capacity.
-
-        need to check every time step from start_time to start_time + duration - 1
-        (activity occupies resources for its full duration)
+        Check if we can place an activity with given resources at start_time
+        for the given duration without exceeding capacity.
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   for each resource k:
-        #     current_usage = self.usage.get(t, [0]*self.k)[k]
-        #     if current_usage + activity.resources[k] > self.capacities[k]:
-        #       return False
-        # return True
-        pass
+        if duration == 0:
+            return True
+        end = start_time + duration
+        for t in range(start_time, end):
+            current = self.usage.get(t)
+            if current is None:
+                for r in range(self.k):
+                    if resources[r] > self.capacities[r]:
+                        return False
+            else:
+                for r in range(self.k):
+                    if current[r] + resources[r] > self.capacities[r]:
+                        return False
+        return True
 
-    def book(self, activity, start_time):
+    def book(self, resources, start_time, duration):
+        """Record resource usage over [start, start+duration)."""
+        if duration == 0:
+            return
+        end = start_time + duration
+        self.finish_times.add(end)
+        for t in range(start_time, end):
+            if t not in self.usage:
+                self.usage[t] = [0] * self.k
+            row = self.usage[t]
+            for r in range(self.k):
+                row[r] += resources[r]
+
+    def find_earliest_feasible(self, resources, earliest, duration):
         """
-        record that this activity is scheduled at start_time.
-        add its resource usage to every time step it occupies.
+        Find the earliest time >= earliest where the activity fits.
+        Uses event-driven jumping: if infeasible at t, skip to the next
+        event time (when some activity finishes and resources free up).
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   if t not in self.usage, init to [0]*self.k
-        #   for each resource k:
-        #     self.usage[t][k] += activity.resources[k]
-        pass
+        if duration == 0:
+            return earliest
+
+        # Check if demand can ever be satisfied
+        for r in range(self.k):
+            if resources[r] > self.capacities[r]:
+                return earliest  # impossible, place anyway
+
+        # Collect relevant event times >= earliest
+        events = sorted(t for t in self.finish_times if t > earliest)
+
+        t = earliest
+        event_idx = 0
+
+        while True:
+            if self.is_feasible(resources, t, duration):
+                return t
+            # Jump to next event time
+            while event_idx < len(events) and events[event_idx] <= t:
+                event_idx += 1
+            if event_idx < len(events):
+                t = events[event_idx]
+                event_idx += 1
+            else:
+                # No more events, scan linearly (shouldn't happen often)
+                t += 1
+                # Safety bound
+                if t > earliest + 10000:
+                    return t
 
 
-def find_earliest_start(project, activity_id, schedule, tracker):
-    """
-    find the earliest time we can start this activity.
-
-    step 1: compute the earliest time based on predecessors
-            (for each pred: earliest >= S_pred + d_pred)
-
-    step 2: from that time onwards, scan forward until resources
-            are available for the full duration
-
-    returns the earliest feasible start time.
-    """
-    activity = project.activities[activity_id]
-
-    # step 1: precedence constraint
-    # TODO: compute earliest based on all predecessors
-    # earliest = 0
-    # for pred_id in project.predecessors[activity_id]:
-    #     pred = project.activities[pred_id]
-    #     earliest = max(earliest, schedule[pred_id] + pred.duration)
-
-    earliest = 0  # placeholder
-
-    # step 2: resource constraint
-    # TODO: scan forward from earliest until resources are available
-    # t = earliest
-    # while not tracker.is_feasible(activity, t):
-    #     t += 1
-    # return t
-
-    return earliest  # placeholder
+def check_feasibility(project):
+    """Check if the instance is feasible (no single activity exceeds any resource cap)."""
+    for act_id in project.all_ids():
+        act = project.activities[act_id]
+        for r in range(project.k):
+            if act.resources[r] > project.capacities[r]:
+                return False
+    return True
 
 
 def ssgs(project, activity_list):
     """
     Serial Schedule Generation Scheme.
-
-    activity_list: a list of activity ids in the order we want to schedule them.
-                   must be precedence-feasible (if i must come before j,
-                   then i appears earlier in the list).
-
-    how it works:
-      1. start dummy activity 0 at time 0
-      2. go through activity_list one by one
-      3. for each activity, find the earliest feasible start time
-      4. schedule it there
-      5. after all done, schedule the dummy end activity
-
-    returns a dict: activity_id -> start_time
+    activity_list: precedence-feasible ordering of real activity ids [1..n].
+    Returns dict: activity_id -> start_time, or None if infeasible.
     """
     tracker = ResourceTracker(project.capacities)
     schedule = {}
+    activities = project.activities
+    predecessors = project.predecessors
 
-    # schedule dummy start at time 0
+    # schedule dummy start
     schedule[0] = 0
-    tracker.book(project.activities[0], 0)
+    act0 = activities[0]
+    tracker.book(act0.resources, 0, act0.duration)
 
-    # TODO: schedule each activity in the given order
-    # for act_id in activity_list:
-    #     start = find_earliest_start(project, act_id, schedule, tracker)
-    #     schedule[act_id] = start
-    #     tracker.book(project.activities[act_id], start)
+    # schedule each activity
+    for act_id in activity_list:
+        act = activities[act_id]
 
-    # schedule dummy end — its start time = the makespan
-    # TODO: find earliest start for activity n+1
-    # end_id = project.n + 1
-    # schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
+        # precedence: earliest = max(S_pred + d_pred)
+        earliest = 0
+        for pred_id in predecessors[act_id]:
+            pred = activities[pred_id]
+            val = schedule[pred_id] + pred.duration
+            if val > earliest:
+                earliest = val
+
+        # resource: find earliest feasible from that point
+        start = tracker.find_earliest_feasible(act.resources, earliest, act.duration)
+        schedule[act_id] = start
+        tracker.book(act.resources, start, act.duration)
+
+    # schedule dummy end
+    end_id = project.n + 1
+    earliest = 0
+    for pred_id in predecessors[end_id]:
+        pred = activities[pred_id]
+        val = schedule[pred_id] + pred.duration
+        if val > earliest:
+            earliest = val
+    schedule[end_id] = earliest
 
     return schedule
 
 
 def get_makespan(project, schedule):
-    """just return the start time of the dummy end activity — that's the makespan."""
+    """Return the start time of the dummy end activity = makespan."""
     return schedule.get(project.n + 1, -1)
 
 
 # ========================================
 # PRIORITY RULES
 # ========================================
-# these generate the activity_list ordering for SSGS.
-# person 3 (optimizer) will also generate orderings,
-# but these are good starting points / baselines.
+
+def _priority_toposort(project, priority_key):
+    """
+    Topological sort of real activities [1..n] using a priority function.
+    Among eligible activities (all preds placed), pick lowest priority_key.
+    Guarantees precedence-feasible ordering.
+    """
+    import heapq
+    placed = {0}
+    result = []
+    real = set(project.real_ids())
+    end_id = project.n + 1
+    successors = project.successors
+    predecessors = project.predecessors
+
+    heap = []
+    for act_id in real:
+        if all(p in placed for p in predecessors[act_id]):
+            heapq.heappush(heap, (priority_key(act_id), act_id))
+
+    while heap:
+        _, act_id = heapq.heappop(heap)
+        if act_id in placed:
+            continue
+        result.append(act_id)
+        placed.add(act_id)
+
+        for s in successors[act_id]:
+            if s == end_id or s in placed or s not in real:
+                continue
+            if all(p in placed for p in predecessors[s]):
+                heapq.heappush(heap, (priority_key(s), s))
+
+    return result
+
 
 def order_by_id(project):
-    """simplest ordering — just go 1, 2, 3, ..., n. not great but good for testing."""
-    return project.real_ids()
+    return _priority_toposort(project, lambda i: i)
 
 
 def order_by_duration(project):
-    """
-    shortest processing time first.
-    TODO: sort real activities by duration (ascending)
-    """
-    # TODO: implement
-    pass
+    return _priority_toposort(project, lambda i: project.activities[i].duration)
+
+
+def _count_total_successors(project):
+    cache = {}
+    def dfs(act_id):
+        if act_id in cache:
+            return cache[act_id]
+        total = set()
+        for s in project.successors[act_id]:
+            total.add(s)
+            total.update(dfs(s))
+        cache[act_id] = total
+        return total
+    for act_id in project.all_ids():
+        dfs(act_id)
+    return {aid: len(cache[aid]) for aid in project.all_ids()}
 
 
 def order_by_successors(project):
-    """
-    most total successors first — the idea is activities with more
-    downstream dependencies are more "important" and should go first.
-    TODO: count total successors (not just direct, but transitive) for each activity
-          then sort descending
-    """
-    # TODO: implement
-    pass
+    counts = _count_total_successors(project)
+    return _priority_toposort(project, lambda i: -counts[i])
+
+
+def _compute_lft(project):
+    """Compute Latest Finish Time via forward + backward pass (precedence only)."""
+    from collections import deque
+    end_id = project.n + 1
+    all_ids = project.all_ids()
+    predecessors = project.predecessors
+    successors = project.successors
+    activities = project.activities
+
+    in_degree = {i: len(predecessors[i]) for i in all_ids}
+    queue = deque([i for i in all_ids if in_degree[i] == 0])
+    est = {0: 0}
+    topo_order = []
+
+    while queue:
+        u = queue.popleft()
+        topo_order.append(u)
+        if u not in est:
+            est[u] = 0
+        u_finish = est[u] + activities[u].duration
+        for s in successors[u]:
+            if s not in est or u_finish > est[s]:
+                est[s] = u_finish
+            in_degree[s] -= 1
+            if in_degree[s] == 0:
+                queue.append(s)
+
+    makespan_ub = est.get(end_id, 0)
+
+    # Backward pass
+    lft = {}
+    for u in reversed(topo_order):
+        succs = successors[u]
+        if not succs:
+            lft[u] = makespan_ub
+        else:
+            lft[u] = min(lft[s] - activities[s].duration for s in succs)
+
+    return lft
 
 
 def order_by_lft(project):
-    """
-    latest finish time (LFT) rule — schedule activities with earlier
-    deadlines first. this is one of the best known priority rules for RCPSP.
-
-    to compute LFT:
-      1. do a forward pass to get earliest start times (ignoring resources)
-      2. makespan_ub = earliest start of dummy end
-      3. do a backward pass from makespan_ub to get latest finish times
-      4. sort activities by LFT ascending
-
-    TODO: implement forward pass, backward pass, then sort
-    """
-    # TODO: implement — this one is abit more work but it's the best priority rule
-    pass
+    lft = _compute_lft(project)
+    return _priority_toposort(project, lambda i: lft.get(i, 0))
 
 
-# quick test
-if __name__ == "__main__":
-    from parser import parse
-    import os
+def order_by_grpw(project):
+    """Greatest Rank Positional Weight: own duration + transitive successor durations."""
+    cache = {}
+    activities = project.activities
+    successors = project.successors
 
-    path = os.path.join(os.path.dirname(__file__), "..", "sm_j10", "PSP1.SCH")
-    proj = parse(path)
+    def rpw(act_id):
+        if act_id in cache:
+            return cache[act_id]
+        total = 0
+        for s in successors[act_id]:
+            total += activities[s].duration + rpw(s)
+        cache[act_id] = total
+        return total
 
-    # try basic ordering
-    order = order_by_id(proj)
-    print(f"activity order: {order}")
+    for aid in project.all_ids():
+        rpw(aid)
 
-    schedule = ssgs(proj, order)
-    print(f"schedule: {schedule}")
-    print(f"makespan: {get_makespan(proj, schedule)}")
+    return _priority_toposort(project, lambda i: -(activities[i].duration + cache.get(i, 0)))
+
+
+def get_all_priority_orders(project):
+    """Return list of (name, activity_list) from all priority rules."""
+    return [
+        ("id", order_by_id(project)),
+        ("spt", order_by_duration(project)),
+        ("mts", order_by_successors(project)),
+        ("lft", order_by_lft(project)),
+        ("grpw", order_by_grpw(project)),
+    ]
