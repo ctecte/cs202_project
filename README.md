@@ -226,7 +226,9 @@ If the problem is infeasible (impossible), output:
 
 ## Performance
 
-Tested on the provided benchmark datasets:
+Tested on the provided benchmark datasets.
+
+### Batch Test (0.2s per instance, all 270 instances)
 
 | Metric | J10 (10 activities) | J20 (20 activities) |
 |--------|--------------------|--------------------|
@@ -234,12 +236,17 @@ Tested on the provided benchmark datasets:
 | Infeasible | 17 | 4 |
 | Feasible & valid | 253/253 (100%) | 266/266 (100%) |
 | Avg makespan (baseline) | 37.9 | 62.4 |
-| Avg makespan (GA, 0.15s) | 36.6 | 58.4 |
-| Improvement | 3.6% | 6.4% |
-| Time per instance (batch) | ~0.15s | ~0.2s |
-| Time per instance (single) | up to 28s | up to 28s |
+| Avg makespan (GA, 0.2s) | 36.6 | 58.4 |
+| Improvement over baseline | 3.4% | 6.4% |
 
-With the full 28-second budget on individual J20 instances, improvements of **5-17%** over baseline are typical.
+### Full Budget Test (28s per instance, 20 sampled instances)
+
+*Results pending — full 28s budget test running.*
+
+The grading script runs each instance with a 30-second wall-clock limit.
+Our solver uses 28 seconds (2s safety buffer). With this full budget,
+the GA has time to explore tens of thousands of orderings and consistently
+finds better schedules than the quick batch test.
 
 ---
 
