@@ -239,14 +239,22 @@ Tested on the provided benchmark datasets.
 | Avg makespan (GA, 0.2s) | 36.6 | 58.4 |
 | Improvement over baseline | 3.4% | 6.4% |
 
-### Full Budget Test (28s per instance, 20 sampled instances)
+### Full Budget Test (28s per instance, 10 sampled instances each)
 
-*Results pending — full 28s budget test running.*
+| Metric | J10 (10 activities) | J20 (20 activities) |
+|--------|--------------------|--------------------|
+| Instances tested | 10 (1 infeasible) | 10 |
+| All valid | 9/9 (100%) | 10/10 (100%) |
+| Avg makespan (baseline) | 41.1 | 54.9 |
+| Avg makespan (GA, 28s) | 40.0 | 51.9 |
+| Improvement over baseline | 2.7% | 5.5% |
+| Instances improved | 3/9 | 9/10 |
 
 The grading script runs each instance with a 30-second wall-clock limit.
-Our solver uses 28 seconds (2s safety buffer). With this full budget,
-the GA has time to explore tens of thousands of orderings and consistently
-finds better schedules than the quick batch test.
+Our solver uses 28 seconds (2s safety buffer). On J20, the GA improved
+9 out of 10 instances, with improvements up to 18.5% on individual instances.
+J10 shows less improvement because with only 10 activities, the priority
+rules already find near-optimal orderings.
 
 ---
 

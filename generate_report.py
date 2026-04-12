@@ -332,10 +332,10 @@ results_data = [
     ('Infeasible instances', '17', '4'),
     ('Feasible & valid', '253/253 (100%)', '266/266 (100%)'),
     ('Avg makespan (baseline)', '37.9', '62.4'),
-    ('Avg makespan (GA, 0.15s)', '36.6', '58.4'),
+    ('Avg makespan (GA, 0.2s)', '36.6', '58.4'),
     ('Min makespan', '9', '9'),
     ('Max makespan', '74', '128'),
-    ('GA improvement over baseline', '3.4%', '6.4%'),
+    ('GA improvement (0.2s batch)', '3.5%', '6.4%'),
 ]
 for i, (metric, j10, j20) in enumerate(results_data):
     table.rows[i+1].cells[0].text = metric
@@ -381,37 +381,47 @@ doc.add_paragraph(
     'may be because the PSPLIB instances have diverse structure where no single rule dominates.'
 )
 
-doc.add_heading('4.4 GA Performance vs Time Budget', level=2)
+doc.add_heading('4.4 GA Performance with Full 28s Budget', level=2)
 
 doc.add_paragraph(
-    'We tested the GA with varying time budgets on 5 representative J20 instances:'
+    'We tested the GA with the full 28-second time budget on 10 sampled instances from '
+    'each dataset (J10 and J20):'
 )
 
-table = doc.add_table(rows=6, cols=4)
+doc.add_heading('J20 Results (28s per instance)', level=3)
+
+table = doc.add_table(rows=11, cols=4)
 table.style = 'Table Grid'
-headers = ['Instance', 'Baseline', 'GA (0.15s)', 'GA (5s)']
+headers = ['Instance', 'Baseline', 'GA (28s)', 'Improvement']
 for i, h in enumerate(headers):
     table.rows[0].cells[i].text = h
     table.rows[0].cells[i].paragraphs[0].runs[0].bold = True
 
 ga_data = [
-    ('PSP1', '54', '51', '45'),
-    ('PSP50', '45', '43', '41'),
-    ('PSP100', '56', '54', '53'),
-    ('PSP150', '39', '37', '35'),
-    ('PSP200', '55', '51', '48'),
+    ('PSP1', '54', '44', '18.5%'),
+    ('PSP27', '38', '36', '5.3%'),
+    ('PSP50', '45', '41', '8.9%'),
+    ('PSP75', '25', '24', '4.0%'),
+    ('PSP123', '79', '77', '2.5%'),
+    ('PSP148', '29', '27', '6.9%'),
+    ('PSP172', '32', '28', '12.5%'),
+    ('PSP197', '89', '89', '0.0%'),
+    ('PSP220', '113', '112', '0.9%'),
+    ('PSP245', '45', '41', '8.9%'),
 ]
-for i, (inst, base, short, long) in enumerate(ga_data):
+for i, (inst, base, ga, imp) in enumerate(ga_data):
     table.rows[i+1].cells[0].text = inst
     table.rows[i+1].cells[1].text = base
-    table.rows[i+1].cells[2].text = short
-    table.rows[i+1].cells[3].text = long
+    table.rows[i+1].cells[2].text = ga
+    table.rows[i+1].cells[3].text = imp
 
 doc.add_paragraph()
 doc.add_paragraph(
-    'The GA shows consistent improvement with more time. At 5 seconds per instance, '
-    'improvements range from 5% to 17% over the baseline. With the full 28-second budget '
-    'available for single-instance grading, further improvements are expected.'
+    'With the full 28-second budget on J20, the GA improved 9 out of 10 instances, '
+    'with improvements up to 18.5% (PSP1). Average improvement was 5.5%. '
+    'J10 showed less improvement (2.7% average, 3 out of 9 feasible instances improved) '
+    'because with only 10 activities, the priority rules already find near-optimal orderings '
+    'and the search space is too small for the GA to add significant value.'
 )
 
 doc.add_heading('4.5 Infeasible Instances', level=2)
@@ -508,8 +518,8 @@ doc.add_paragraph(
     'We developed a solver for the Resource-Constrained Project Scheduling Problem that '
     'combines priority-rule heuristics, a Genetic Algorithm, and Forward-Backward Improvement. '
     'The solver achieves 100% validity on all feasible benchmark instances and produces '
-    'schedules 3\u20136% better than the priority-rule baseline within a 0.15-second time '
-    'budget, with improvements of up to 17% when given the full 28-second budget.'
+    'schedules 3.5\u20136.4% better than the priority-rule baseline in batch mode (0.2s), '
+    'with improvements of up to 18.5% when given the full 28-second budget.'
 )
 
 doc.add_paragraph(
