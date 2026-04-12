@@ -52,7 +52,7 @@ python3 src/main.py --batch sm_j20
 You can set a time limit per instance (default 0.2 seconds for batch):
 
 ```bash
-python3 src/main.py --batch sm_j10 --time 0.5
+python3 src/main.py --batch sm_j10 --time 29
 ```
 
 ---
