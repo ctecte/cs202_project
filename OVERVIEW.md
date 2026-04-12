@@ -239,3 +239,25 @@ The goal is to find the schedule with the **smallest possible makespan** while r
 2. **Scheduler**: Assign start times to all activities such that precedence and resource constraints are satisfied
 3. **Optimizer**: Minimize the makespan — use heuristics and/or metaheuristics since the problem is NP-hard
 4. **Time management**: Produce a valid (ideally good) solution within 30 seconds per instance
+
+---
+
+## CLI Commands
+
+Run one instance:
+
+```powershell
+python main.py ..\sm_j10\PSP1.SCH
+```
+
+Run batch mode (print to CLI):
+
+```powershell
+python main.py --batch ..\sm_j10
+```
+
+Run batch mode and save output to a file:
+
+```powershell
+python main.py --batch ..\sm_j10 > batch_results.txt
+```

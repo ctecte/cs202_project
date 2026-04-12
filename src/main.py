@@ -18,7 +18,7 @@ import time
 sys.path.insert(0, os.path.dirname(__file__))
 
 from parser import parse
-from scheduler import ssgs, get_makespan, order_by_id
+from scheduler import ssgs, get_makespan, order_by_id, order_by_lft
 from optimizer import genetic_algorithm
 from validator import validate, compute_makespan, test_all_instances
 
@@ -37,18 +37,21 @@ def solve(filepath):
     # step 1: get a quick baseline with a simple priority rule
     # (this gives us a valid schedule immediately, even if the optimizer
     #  hasn't been implemented yet)
-    baseline_order = order_by_id(project)
+    baseline_order = order_by_lft(project)
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
 
     # step 2: try to improve with the optimizer
-    # TODO: uncomment this once optimizer is implemented
-    # optimized = genetic_algorithm(project, time_limit=TIME_BUDGET)
-    # if optimized:
-    #     opt_makespan = get_makespan(project, optimized)
-    #     if opt_makespan < best_makespan:
-    #         best_schedule = optimized
-    #         best_makespan = opt_makespan
+    try:
+        optimized = genetic_algorithm(project, time_limit=TIME_BUDGET)
+        if optimized:
+            opt_makespan = get_makespan(project, optimized)
+            if opt_makespan < best_makespan:
+                best_schedule = optimized
+                best_makespan = opt_makespan
+    except Exception:
+        # Keep baseline schedule on optimizer failure to preserve CLI behavior.
+        pass
 
     return project, best_schedule
 

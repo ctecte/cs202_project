@@ -38,26 +38,25 @@ class ResourceTracker:
         need to check every time step from start_time to start_time + duration - 1
         (activity occupies resources for its full duration)
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   for each resource k:
-        #     current_usage = self.usage.get(t, [0]*self.k)[k]
-        #     if current_usage + activity.resources[k] > self.capacities[k]:
-        #       return False
-        # return True
-        pass
+        for t in range(start_time, start_time + activity.duration):
+            current = self.usage.get(t)
+            if current is None:
+                current = [0] * self.k
+            for r in range(self.k):
+                if current[r] + activity.resources[r] > self.capacities[r]:
+                    return False
+        return True
 
     def book(self, activity, start_time):
         """
         record that this activity is scheduled at start_time.
         add its resource usage to every time step it occupies.
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   if t not in self.usage, init to [0]*self.k
-        #   for each resource k:
-        #     self.usage[t][k] += activity.resources[k]
-        pass
+        for t in range(start_time, start_time + activity.duration):
+            if t not in self.usage:
+                self.usage[t] = [0] * self.k
+            for r in range(self.k):
+                self.usage[t][r] += activity.resources[r]
 
 
 def find_earliest_start(project, activity_id, schedule, tracker):
@@ -75,22 +74,18 @@ def find_earliest_start(project, activity_id, schedule, tracker):
     activity = project.activities[activity_id]
 
     # step 1: precedence constraint
-    # TODO: compute earliest based on all predecessors
-    # earliest = 0
-    # for pred_id in project.predecessors[activity_id]:
-    #     pred = project.activities[pred_id]
-    #     earliest = max(earliest, schedule[pred_id] + pred.duration)
-
-    earliest = 0  # placeholder
+    earliest = 0
+    for pred_id in project.predecessors[activity_id]:
+        if pred_id not in schedule:
+            raise ValueError(f"Predecessor {pred_id} of activity {activity_id} is not scheduled yet")
+        pred = project.activities[pred_id]
+        earliest = max(earliest, schedule[pred_id] + pred.duration)
 
     # step 2: resource constraint
-    # TODO: scan forward from earliest until resources are available
-    # t = earliest
-    # while not tracker.is_feasible(activity, t):
-    #     t += 1
-    # return t
-
-    return earliest  # placeholder
+    t = earliest
+    while not tracker.is_feasible(activity, t):
+        t += 1
+    return t
 
 
 def ssgs(project, activity_list):
@@ -117,16 +112,19 @@ def ssgs(project, activity_list):
     schedule[0] = 0
     tracker.book(project.activities[0], 0)
 
-    # TODO: schedule each activity in the given order
-    # for act_id in activity_list:
-    #     start = find_earliest_start(project, act_id, schedule, tracker)
-    #     schedule[act_id] = start
-    #     tracker.book(project.activities[act_id], start)
+    # schedule each real activity in the given order
+    for act_id in activity_list:
+        if act_id < 1 or act_id > project.n:
+            continue
+        if act_id in schedule:
+            continue
+        start = find_earliest_start(project, act_id, schedule, tracker)
+        schedule[act_id] = start
+        tracker.book(project.activities[act_id], start)
 
     # schedule dummy end — its start time = the makespan
-    # TODO: find earliest start for activity n+1
-    # end_id = project.n + 1
-    # schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
+    end_id = project.n + 1
+    schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
 
     return schedule
 
@@ -153,8 +151,9 @@ def order_by_duration(project):
     shortest processing time first.
     TODO: sort real activities by duration (ascending)
     """
-    # TODO: implement
-    pass
+    ids = project.real_ids()
+    ids.sort(key=lambda aid: (project.activities[aid].duration, aid))
+    return ids
 
 
 def order_by_successors(project):
@@ -164,8 +163,25 @@ def order_by_successors(project):
     TODO: count total successors (not just direct, but transitive) for each activity
           then sort descending
     """
-    # TODO: implement
-    pass
+    memo = {}
+
+    def total_successors(aid):
+        if aid in memo:
+            return memo[aid]
+        visited = set()
+        stack = list(project.successors[aid])
+        while stack:
+            nxt = stack.pop()
+            if nxt in visited or nxt == project.n + 1:
+                continue
+            visited.add(nxt)
+            stack.extend(project.successors[nxt])
+        memo[aid] = len(visited)
+        return memo[aid]
+
+    ids = project.real_ids()
+    ids.sort(key=lambda aid: (-total_successors(aid), aid))
+    return ids
 
 
 def order_by_lft(project):
@@ -181,8 +197,33 @@ def order_by_lft(project):
 
     TODO: implement forward pass, backward pass, then sort
     """
-    # TODO: implement — this one is abit more work but it's the best priority rule
-    pass
+    end_id = project.n + 1
+    est = {aid: 0 for aid in project.all_ids()}
+
+    # Forward pass on the natural topological order of these instances.
+    for aid in project.all_ids():
+        finish = est[aid] + project.activities[aid].duration
+        for succ in project.successors[aid]:
+            if finish > est[succ]:
+                est[succ] = finish
+
+    ub = est[end_id]
+    lft = {aid: ub for aid in project.all_ids()}
+    lft[end_id] = ub
+
+    # Backward pass for latest finish times.
+    for aid in reversed(project.all_ids()):
+        if aid == end_id:
+            continue
+        succs = project.successors[aid]
+        if succs:
+            lft[aid] = min(lft[s] - project.activities[s].duration for s in succs)
+        else:
+            lft[aid] = ub
+
+    ids = project.real_ids()
+    ids.sort(key=lambda aid: (lft[aid], project.activities[aid].duration, aid))
+    return ids
 
 
 # quick test

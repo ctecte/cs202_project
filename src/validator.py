@@ -24,15 +24,14 @@ def check_precedence(project, schedule):
     """
     violations = []
 
-    # TODO: implement
-    # for act_id in project.all_ids():
-    #     act = project.activities[act_id]
-    #     for succ_id in project.successors[act_id]:
-    #         if schedule[succ_id] < schedule[act_id] + act.duration:
-    #             violations.append(
-    #                 f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
-    #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
-    #             )
+    for act_id in project.all_ids():
+        act = project.activities[act_id]
+        for succ_id in project.successors[act_id]:
+            if schedule[succ_id] < schedule[act_id] + act.duration:
+                violations.append(
+                    f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
+                    f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
+                )
 
     return violations
 
@@ -51,25 +50,23 @@ def check_resources(project, schedule):
     """
     violations = []
 
-    # TODO: implement
-    # first, find the time range we need to check
-    # max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
-    #
-    # for t in range(max_time):
-    #     usage = [0] * project.k
-    #     for act_id in project.all_ids():
-    #         s = schedule[act_id]
-    #         d = project.activities[act_id].duration
-    #         if s <= t < s + d:  # activity is running at time t
-    #             for r in range(project.k):
-    #                 usage[r] += project.activities[act_id].resources[r]
-    #
-    #     for r in range(project.k):
-    #         if usage[r] > project.capacities[r]:
-    #             violations.append(
-    #                 f"RESOURCE FAIL: time {t}, resource R{r+1}: "
-    #                 f"usage {usage[r]} > capacity {project.capacities[r]}"
-    #             )
+    max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
+
+    for t in range(max_time):
+        usage = [0] * project.k
+        for act_id in project.all_ids():
+            s = schedule[act_id]
+            d = project.activities[act_id].duration
+            if s <= t < s + d:
+                for r in range(project.k):
+                    usage[r] += project.activities[act_id].resources[r]
+
+        for r in range(project.k):
+            if usage[r] > project.capacities[r]:
+                violations.append(
+                    f"RESOURCE FAIL: time {t}, resource R{r+1}: "
+                    f"usage {usage[r]} > capacity {project.capacities[r]}"
+                )
 
     return violations
 

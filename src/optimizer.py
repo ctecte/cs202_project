@@ -19,7 +19,7 @@ two approaches provided below (pick one or try both):
 import random
 import time
 from models import Project
-from scheduler import ssgs, get_makespan
+from scheduler import ssgs, get_makespan, order_by_lft
 
 
 # ========================================
@@ -37,27 +37,28 @@ def random_activity_list(project):
 
     this always produces a valid ordering — predecessors come before successors.
     """
-    # TODO: implement this
-    # placed = set()
-    # placed.add(0)  # dummy start is already "done"
-    # activity_list = []
-    #
-    # while len(activity_list) < project.n:
-    #     eligible = []
-    #     for act_id in project.real_ids():
-    #         if act_id in placed:
-    #             continue
-    #         # check if all predecessors are placed
-    #         all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
-    #         if all_preds_done:
-    #             eligible.append(act_id)
-    #
-    #     pick = random.choice(eligible)
-    #     activity_list.append(pick)
-    #     placed.add(pick)
-    #
-    # return activity_list
-    pass
+    placed = {0}
+    activity_list = []
+
+    while len(activity_list) < project.n:
+      eligible = []
+      for act_id in project.real_ids():
+        if act_id in placed:
+          continue
+        all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
+        if all_preds_done:
+          eligible.append(act_id)
+
+      if not eligible:
+        # defensive fallback for malformed precedence data
+        remaining = [i for i in project.real_ids() if i not in placed]
+        eligible = remaining
+
+      pick = random.choice(eligible)
+      activity_list.append(pick)
+      placed.add(pick)
+
+    return activity_list
 
 
 def is_precedence_feasible(project, activity_list):
@@ -66,16 +67,14 @@ def is_precedence_feasible(project, activity_list):
     for every edge i->j, i must appear before j in the list.
     useful for sanity checking after crossover/mutation.
     """
-    # TODO: implement
-    # position = {act: idx for idx, act in enumerate(activity_list)}
-    # for act in activity_list:
-    #     for succ_id in project.successors[act]:
-    #         if succ_id == project.n + 1:  # skip dummy end
-    #             continue
-    #         if position[act] >= position[succ_id]:
-    #             return False
-    # return True
-    pass
+    position = {act: idx for idx, act in enumerate(activity_list)}
+    for act in activity_list:
+      for succ_id in project.successors[act]:
+        if succ_id == project.n + 1:
+          continue
+        if succ_id in position and position[act] >= position[succ_id]:
+          return False
+    return True
 
 
 # ========================================
@@ -87,10 +86,12 @@ def tournament_select(population, fitnesses, tournament_size=3):
     pick a few random individuals, return the best one.
     standard tournament selection — simple and works well.
     """
-    # TODO: implement
-    # pick `tournament_size` random indices from population
-    # return the one with the best (lowest) fitness
-    pass
+    if not population:
+      return None
+    t = min(tournament_size, len(population))
+    indices = random.sample(range(len(population)), t)
+    best_idx = min(indices, key=lambda i: fitnesses[i])
+    return population[best_idx][:]
 
 
 def crossover(parent1, parent2, project):
@@ -108,8 +109,38 @@ def crossover(parent1, parent2, project):
     TODO: implement — this is the trickiest part of the GA.
     make sure the result is always a valid precedence-feasible permutation.
     """
-    # TODO: implement
-    pass
+    # Precedence-preserving merge: repeatedly pick one eligible activity
+    # from either parent (in parent order), defaulting to random eligible.
+    placed = {0}
+    remaining = set(project.real_ids())
+    child = []
+
+    while remaining:
+      eligible = [
+        aid for aid in remaining
+        if all(pred in placed for pred in project.predecessors[aid])
+      ]
+      if not eligible:
+        # malformed input fallback
+        eligible = list(remaining)
+
+      from_p1 = next((aid for aid in parent1 if aid in eligible), None)
+      from_p2 = next((aid for aid in parent2 if aid in eligible), None)
+
+      if from_p1 is not None and from_p2 is not None:
+        pick = from_p1 if random.random() < 0.5 else from_p2
+      elif from_p1 is not None:
+        pick = from_p1
+      elif from_p2 is not None:
+        pick = from_p2
+      else:
+        pick = random.choice(eligible)
+
+      child.append(pick)
+      placed.add(pick)
+      remaining.remove(pick)
+
+    return child
 
 
 def mutate(activity_list, project, mutation_rate=0.1):
@@ -121,14 +152,13 @@ def mutate(activity_list, project, mutation_rate=0.1):
 
     TODO: implement
     """
-    # TODO: implement
-    # for i in range(len(activity_list) - 1):
-    #     if random.random() < mutation_rate:
-    #         # try swapping activity_list[i] and activity_list[i+1]
-    #         # only do it if it doesn't violate precedence
-    #         pass
-    # return activity_list
-    pass
+    mutated = activity_list[:]
+    for i in range(len(mutated) - 1):
+      if random.random() < mutation_rate:
+        mutated[i], mutated[i + 1] = mutated[i + 1], mutated[i]
+        if not is_precedence_feasible(project, mutated):
+          mutated[i], mutated[i + 1] = mutated[i + 1], mutated[i]
+    return mutated
 
 
 def genetic_algorithm(project, time_limit=25):
@@ -153,50 +183,71 @@ def genetic_algorithm(project, time_limit=25):
     TODO: implement the full loop. suggested population size: 50-100.
     """
     start_time = time.time()
-    pop_size = 50
+    pop_size = 40
     best_schedule = None
     best_makespan = float('inf')
+    generation = 0
 
     # --- STEP 1: generate initial population ---
-    # TODO: create pop_size random activity lists
-    # population = [random_activity_list(project) for _ in range(pop_size)]
+    population = [random_activity_list(project) for _ in range(pop_size)]
+
+    # Seed one deterministic strong baseline into the population.
+    try:
+      baseline = order_by_lft(project)
+      if is_precedence_feasible(project, baseline):
+        population[0] = baseline
+    except Exception:
+      pass
 
     # --- STEP 2: evaluate initial population ---
-    # TODO: for each individual, run SSGS and record the makespan
-    # fitnesses = []
-    # for individual in population:
-    #     sched = ssgs(project, individual)
-    #     ms = get_makespan(project, sched)
-    #     fitnesses.append(ms)
-    #     if ms < best_makespan:
-    #         best_makespan = ms
-    #         best_schedule = sched
+    fitnesses = []
+    for individual in population:
+      try:
+        sched = ssgs(project, individual)
+        ms = get_makespan(project, sched)
+      except Exception:
+        ms = float('inf')
+        sched = None
+      fitnesses.append(ms)
+      if sched is not None and ms < best_makespan:
+        best_makespan = ms
+        best_schedule = sched
 
     # --- STEP 3: main loop ---
-    # TODO: keep improving until time runs out
-    # generation = 0
-    # while time.time() - start_time < time_limit:
-    #     parent1 = tournament_select(population, fitnesses)
-    #     parent2 = tournament_select(population, fitnesses)
-    #     child = crossover(parent1, parent2, project)
-    #     child = mutate(child, project)
-    #
-    #     child_sched = ssgs(project, child)
-    #     child_ms = get_makespan(project, child_sched)
-    #
-    #     # replace worst individual if child is better
-    #     worst_idx = fitnesses.index(max(fitnesses))
-    #     if child_ms < fitnesses[worst_idx]:
-    #         population[worst_idx] = child
-    #         fitnesses[worst_idx] = child_ms
-    #
-    #     if child_ms < best_makespan:
-    #         best_makespan = child_ms
-    #         best_schedule = child_sched
-    #
-    #     generation += 1
+    while time.time() - start_time < time_limit:
+      parent1 = tournament_select(population, fitnesses)
+      parent2 = tournament_select(population, fitnesses)
+      if parent1 is None or parent2 is None:
+        break
 
-    # print(f"GA done — {generation} generations, best makespan: {best_makespan}")
+      child = crossover(parent1, parent2, project)
+      child = mutate(child, project)
+
+      if not is_precedence_feasible(project, child):
+        continue
+
+      try:
+        child_sched = ssgs(project, child)
+        child_ms = get_makespan(project, child_sched)
+      except Exception:
+        continue
+
+      worst_idx = max(range(len(fitnesses)), key=lambda i: fitnesses[i])
+      if child_ms < fitnesses[worst_idx]:
+        population[worst_idx] = child
+        fitnesses[worst_idx] = child_ms
+
+      if child_ms < best_makespan:
+        best_makespan = child_ms
+        best_schedule = child_sched
+
+      generation += 1
+
+    if best_schedule is None:
+      # Hard fallback to guarantee we return a schedule.
+      fallback = order_by_lft(project)
+      best_schedule = ssgs(project, fallback)
+
     return best_schedule
 
 
