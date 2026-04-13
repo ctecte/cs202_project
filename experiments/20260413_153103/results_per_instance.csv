@@ -1,0 +1,7 @@
+instance,folder,approach,approach_name,time_budget,workers,runtime_sec,makespan,valid,status,error
+PSP1.SCH,sm_j10,topo_seq,Topological Sequential Baseline (precedence-only),3.0,1,0.0,46,True,OK,
+PSP2.SCH,sm_j10,topo_seq,Topological Sequential Baseline (precedence-only),3.0,1,0.0056,71,True,OK,
+PSP1.SCH,sm_j10,lft_ssgs,Serial Schedule Generation Scheme (Latest Finish Time priority),3.0,1,0.0,25,True,OK,
+PSP2.SCH,sm_j10,lft_ssgs,Serial Schedule Generation Scheme (Latest Finish Time priority),3.0,1,0.0,51,True,OK,
+PSP1.SCH,sm_j10,ga,Genetic Algorithm + SSGS Decoder,3.0,1,0.0586,25,True,OK,
+PSP2.SCH,sm_j10,ga,Genetic Algorithm + SSGS Decoder,3.0,1,0.0833,46,True,OK,

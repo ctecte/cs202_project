@@ -1,0 +1,4 @@
+folder,approach,instances,valid_count,invalid_count,avg_runtime_sec,avg_makespan_valid
+sm_j10,ga,3,3,0,0.0807,33.0
+sm_j10,lft_ssgs,3,3,0,0.0,36.0
+sm_j10,topo_seq,3,3,0,0.0028,57.3333

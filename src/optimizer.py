@@ -188,6 +188,16 @@ def genetic_algorithm(project, time_limit=25):
     best_makespan = float('inf')
     generation = 0
 
+    # Stop early when search is flat: helpful for larger time budgets where
+    # the population converges quickly and extra time brings no gain.
+    min_runtime_before_stall_check = min(1.0, max(0.2, 0.10 * time_limit))
+    stall_seconds = min(8.0, max(1.0, 0.25 * time_limit))
+    no_improve_generations = 0
+    max_no_improve_generations = max(300, 20 * project.n)
+    last_improvement_time = start_time
+    restart_count = 0
+    max_restarts = max(1, int(time_limit // 6))
+
     # --- STEP 1: generate initial population ---
     population = [random_activity_list(project) for _ in range(pop_size)]
 
@@ -212,6 +222,8 @@ def genetic_algorithm(project, time_limit=25):
       if sched is not None and ms < best_makespan:
         best_makespan = ms
         best_schedule = sched
+        last_improvement_time = time.time()
+        no_improve_generations = 0
 
     # --- STEP 3: main loop ---
     while time.time() - start_time < time_limit:
@@ -240,8 +252,57 @@ def genetic_algorithm(project, time_limit=25):
       if child_ms < best_makespan:
         best_makespan = child_ms
         best_schedule = child_sched
+        last_improvement_time = time.time()
+        no_improve_generations = 0
+      else:
+        no_improve_generations += 1
 
       generation += 1
+
+      elapsed = time.time() - start_time
+      stalled_for = time.time() - last_improvement_time
+      stalled = (
+        elapsed >= min_runtime_before_stall_check
+        and stalled_for >= stall_seconds
+      )
+      generation_stalled = no_improve_generations >= max_no_improve_generations
+
+      if stalled or generation_stalled:
+        remaining = time_limit - elapsed
+        can_restart = (
+          restart_count < max_restarts
+          and remaining >= min_runtime_before_stall_check
+        )
+        if not can_restart:
+          break
+
+        # Diversification restart: refresh population to escape local optima.
+        restart_count += 1
+        no_improve_generations = 0
+        last_improvement_time = time.time()
+
+        population = [random_activity_list(project) for _ in range(pop_size)]
+        try:
+          baseline = order_by_lft(project)
+          if is_precedence_feasible(project, baseline):
+            population[0] = baseline
+        except Exception:
+          pass
+
+        fitnesses = []
+        for individual in population:
+          try:
+            sched = ssgs(project, individual)
+            ms = get_makespan(project, sched)
+          except Exception:
+            ms = float('inf')
+            sched = None
+          fitnesses.append(ms)
+          if sched is not None and ms < best_makespan:
+            best_makespan = ms
+            best_schedule = sched
+            last_improvement_time = time.time()
+            no_improve_generations = 0
 
     if best_schedule is None:
       # Hard fallback to guarantee we return a schedule.

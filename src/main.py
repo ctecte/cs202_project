@@ -20,13 +20,26 @@ import multiprocessing as mp
 sys.path.insert(0, os.path.dirname(__file__))
 
 from parser import parse
-from scheduler import ssgs, get_makespan, order_by_id, order_by_lft
+from scheduler import (
+    ssgs,
+    get_makespan,
+    order_by_id,
+    order_by_lft,
+    topological_sequential_schedule,
+)
 from optimizer import genetic_algorithm
 from validator import validate, compute_makespan, test_all_instances
 
 
 TIME_BUDGET = 28  # seconds — leave 2s buffer from the 30s limit
 DEFAULT_WORKERS = max(1, mp.cpu_count())
+
+APPROACH_LABELS = {
+    "topo_seq": "Topological Sequential Baseline (precedence-only)",
+    "id_ssgs": "SSGS with Activity-ID Priority",
+    "lft_ssgs": "SSGS with Latest Finish Time Priority",
+    "ga": "Genetic Algorithm + SSGS Decoder",
+}
 
 
 def _extract_workers(argv):
@@ -55,6 +68,28 @@ def _extract_time_budget(argv):
         return TIME_BUDGET
 
 
+def _extract_approach(argv):
+    """Read optional --approach value."""
+    if "--approach" not in argv:
+        return "ga"
+    idx = argv.index("--approach")
+    if idx + 1 >= len(argv):
+        return "ga"
+    raw = argv[idx + 1].strip().lower()
+    aliases = {
+        "topological": "topo_seq",
+        "topological_baseline": "topo_seq",
+        "topological_sequential": "topo_seq",
+        "id": "id_ssgs",
+        "ssgs_id": "id_ssgs",
+        "lft": "lft_ssgs",
+        "ssgs_lft": "lft_ssgs",
+        "genetic": "ga",
+        "genetic_algorithm": "ga",
+    }
+    return aliases.get(raw, raw)
+
+
 def _worker_optimize(task):
     """Independent portfolio worker with its own random seed."""
     filepath, seed, time_budget = task
@@ -66,17 +101,23 @@ def _worker_optimize(task):
     return makespan, schedule
 
 
-def solve(filepath, workers=1, time_budget=TIME_BUDGET):
+def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
     """
     full pipeline: parse -> optimize -> return best schedule.
     this is what gets called for each instance.
     """
     project = parse(filepath)
 
-    # --- STRATEGY ---
-    # step 1: get a quick baseline with a simple priority rule
-    # (this gives us a valid schedule immediately, even if the optimizer
-    #  hasn't been implemented yet)
+    if approach == "topo_seq":
+        return project, topological_sequential_schedule(project)
+
+    if approach == "id_ssgs":
+        return project, ssgs(project, order_by_id(project))
+
+    if approach == "lft_ssgs":
+        return project, ssgs(project, order_by_lft(project))
+
+    # Default = GA portfolio with LFT baseline safety net.
     baseline_order = order_by_lft(project)
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
@@ -151,22 +192,30 @@ def main():
         print("       python main.py --batch <folder>")
         print("optional: --workers <num_workers>")
         print("optional: --time-budget <seconds_per_instance>")
+        print("optional: --approach <ga|lft_ssgs|id_ssgs|topo_seq>")
         sys.exit(1)
 
     workers = _extract_workers(sys.argv)
     time_budget = _extract_time_budget(sys.argv)
+    approach = _extract_approach(sys.argv)
 
     if sys.argv[1] == "--batch":
         # batch mode — run all instances in a folder
         folder = sys.argv[2] if len(sys.argv) > 2 else "../sm_j10"
-        print(f"batch config: workers={workers}, time_budget={time_budget:.2f}s", file=sys.stderr)
-        test_all_instances(folder, lambda fp: solve(fp, workers=workers, time_budget=time_budget))
+        print(
+            f"batch config: workers={workers}, time_budget={time_budget:.2f}s, approach={approach} ({APPROACH_LABELS.get(approach, approach)})",
+            file=sys.stderr,
+        )
+        test_all_instances(
+            folder,
+            lambda fp: solve(fp, workers=workers, time_budget=time_budget, approach=approach),
+        )
     else:
         # single instance mode
         filepath = sys.argv[1]
         start = time.time()
 
-        project, schedule = solve(filepath, workers=workers, time_budget=time_budget)
+        project, schedule = solve(filepath, workers=workers, time_budget=time_budget, approach=approach)
         elapsed = time.time() - start
 
         # validate
@@ -180,6 +229,7 @@ def main():
                 print(f"  {v}")
         print(f"workers: {workers}")
         print(f"time_budget: {time_budget:.2f}s")
+        print(f"approach: {approach} ({APPROACH_LABELS.get(approach, approach)})")
         print(f"time: {elapsed:.2f}s")
 
 

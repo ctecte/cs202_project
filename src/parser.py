@@ -55,6 +55,11 @@ def parse(filepath):
         line = lines[line_idx]
 
         tokens = line.split()
+        if len(tokens) != 2 + k:
+            raise ValueError(
+                f"Malformed activity/resource row in {os.path.basename(filepath)}: "
+                f"expected {2 + k} fields, got {len(tokens)}"
+            )
         activity_id = int(tokens[0])
         duration = int(tokens[1])
 
@@ -68,9 +73,23 @@ def parse(filepath):
     # last line is just the max capacity for each resource type
     # took me a while to figure out this was at the very end lol
     cap_tokens = lines[-1].split()
+    if len(cap_tokens) != k:
+        raise ValueError(
+            f"Malformed capacity row in {os.path.basename(filepath)}: "
+            f"expected {k} capacities, got {len(cap_tokens)}"
+        )
     capacities = []
     for c in cap_tokens:
         capacities.append(int(c))
+
+    # Fail fast for instances that are impossible under this renewable model.
+    for act_id in range(1, n + 1):
+        reqs = activities[act_id].resources
+        for r in range(k):
+            if reqs[r] > capacities[r]:
+                raise ValueError(
+                    f"Activity {act_id} requires R{r + 1}={reqs[r]} > cap {capacities[r]}"
+                )
 
     return Project(
         n=n,

@@ -1,0 +1,4 @@
+folder,approach,approach_name,instances,valid_count,invalid_count,avg_runtime_sec,avg_makespan_valid
+sm_j10,ga,Genetic Algorithm + SSGS Decoder,2,2,0,0.0709,35.5
+sm_j10,lft_ssgs,Serial Schedule Generation Scheme (Latest Finish Time priority),2,2,0,0.0,38.0
+sm_j10,topo_seq,Topological Sequential Baseline (precedence-only),2,2,0,0.0028,58.5

@@ -151,6 +151,40 @@ def get_makespan(project, schedule):
     return schedule.get(project.n + 1, -1)
 
 
+def topological_sequential_schedule(project):
+    """
+    Baseline benchmark required by the project brief:
+    1) build a precedence-feasible topological order,
+    2) ignore resource optimization,
+    3) schedule activities one-by-one sequentially.
+
+    This produces a valid but intentionally weak baseline.
+    """
+    order = precedence_feasible_order(project, priority_key=lambda aid: aid)
+    schedule = {0: 0}
+    current_time = 0
+
+    for act_id in order:
+        act = project.activities[act_id]
+        pred_ready = 0
+        for pred_id in project.predecessors[act_id]:
+            pred = project.activities[pred_id]
+            pred_ready = max(pred_ready, schedule[pred_id] + pred.duration)
+
+        start_time = max(current_time, pred_ready)
+        schedule[act_id] = start_time
+        current_time = start_time + act.duration
+
+    end_id = project.n + 1
+    end_ready = 0
+    for pred_id in project.predecessors[end_id]:
+        pred = project.activities[pred_id]
+        end_ready = max(end_ready, schedule[pred_id] + pred.duration)
+    schedule[end_id] = max(current_time, end_ready)
+
+    return schedule
+
+
 def precedence_feasible_order(project, priority_key=None):
     """
     Build a precedence-feasible activity list using topological selection.
