@@ -53,6 +53,30 @@ This generates machine specs + per-instance + aggregate CSV + summary markdown.
 python src/experiments.py --folders sm_j10 sm_j20 --approaches topo_seq id_ssgs lft_ssgs ga --time-budget 28 --workers 1
 ```
 
+## Interactive Experiment Launcher (Menu-Style)
+
+If you want prompts like "choose 1,2,3,4", "how many runs each", and "workers per run", use:
+
+```powershell
+python src/experiments_cli.py
+```
+
+It will ask for:
+- folders
+- time budget
+- instance limit
+- algorithm selection by number
+- number of runs per selected algorithm
+- workers for each run
+- confirmation to run
+
+Then it writes one consolidated output folder with:
+- `machine_specs.json`
+- `run_config.json`
+- `results_per_instance.csv`
+- `results_aggregate.csv`
+- `summary.md`
+
 Using easy aliases:
 
 ```powershell
@@ -73,6 +97,10 @@ Each run creates:
 - `experiments/<timestamp>/results_per_instance.csv`
 - `experiments/<timestamp>/results_aggregate.csv`
 - `experiments/<timestamp>/summary.md`
+
+All experiment runners now always save under `experiments/`.
+- For `experiments.py`, `--out-dir` is treated as a subfolder under `experiments/`.
+- For `experiments_cli.py`, you choose an output subfolder inside `experiments/`.
 
 ## Worker Notes
 

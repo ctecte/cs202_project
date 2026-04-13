@@ -192,6 +192,32 @@ def write_csv(path, rows, fieldnames):
             writer.writerow(r)
 
 
+def render_markdown_table(headers, rows, right_align_cols=None):
+    """Render a markdown table with aligned source formatting."""
+    right_align_cols = set(right_align_cols or [])
+    widths = [len(str(h)) for h in headers]
+    str_rows = [[str(cell) for cell in row] for row in rows]
+
+    for row in str_rows:
+        for i, cell in enumerate(row):
+            if len(cell) > widths[i]:
+                widths[i] = len(cell)
+
+    def fmt_row(row_vals):
+        cells = [row_vals[i].ljust(widths[i]) for i in range(len(widths))]
+        return "| " + " | ".join(cells) + " |"
+
+    def fmt_sep(i):
+        if i in right_align_cols:
+            return "-" * max(1, widths[i] - 1) + ":"
+        return "-" * max(1, widths[i])
+
+    lines = [fmt_row([str(h) for h in headers])]
+    lines.append("| " + " | ".join(fmt_sep(i) for i in range(len(widths))) + " |")
+    lines.extend(fmt_row(row) for row in str_rows)
+    return lines
+
+
 def write_markdown_summary(path, aggregate, machine_specs, args):
     lines = []
     lines.append("# RCPSP Experiment Summary")
@@ -211,12 +237,30 @@ def write_markdown_summary(path, aggregate, machine_specs, args):
     lines.append("")
     lines.append("## Aggregate Results")
     lines.append("")
-    lines.append("| Folder | Approach Code | Approach Name | Instances | Valid | Invalid | Avg Runtime (s) | Avg Makespan (valid only) |")
-    lines.append("|---|---|---|---:|---:|---:|---:|---:|")
-    for row in aggregate:
-        lines.append(
-            f"| {row['folder']} | {row['approach']} | {row['approach_name']} | {row['instances']} | {row['valid_count']} | {row['invalid_count']} | {row['avg_runtime_sec']} | {row['avg_makespan_valid']} |"
-        )
+    agg_headers = [
+        "Folder",
+        "Approach Code",
+        "Approach Name",
+        "Instances",
+        "Valid",
+        "Invalid",
+        "Avg Runtime (s)",
+        "Avg Makespan (valid only)",
+    ]
+    agg_rows = [
+        [
+            row["folder"],
+            row["approach"],
+            row["approach_name"],
+            row["instances"],
+            row["valid_count"],
+            row["invalid_count"],
+            row["avg_runtime_sec"],
+            row["avg_makespan_valid"],
+        ]
+        for row in aggregate
+    ]
+    lines.extend(render_markdown_table(agg_headers, agg_rows, right_align_cols={3, 4, 5, 6, 7}))
     lines.append("")
     lines.append("## Notes")
     lines.append("")
@@ -238,7 +282,11 @@ def parse_args():
     ap.add_argument("--time-budget", type=float, default=28.0)
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--limit", type=int, default=0, help="Optional number of instances per folder")
-    ap.add_argument("--out-dir", default="experiments")
+    ap.add_argument(
+        "--out-dir",
+        default="",
+        help="Optional subfolder under experiments/ (e.g. ga_w1).",
+    )
     return ap.parse_args()
 
 
@@ -248,10 +296,19 @@ def main():
     unknown = [a for a in args.approaches if a not in APPROACHES]
     if unknown:
         raise ValueError(f"Unknown approach(es): {unknown}. Valid: {list(APPROACHES)}")
-    os.makedirs(args.out_dir, exist_ok=True)
+
+    experiments_root = "experiments"
+    os.makedirs(experiments_root, exist_ok=True)
+
+    out_subdir = args.out_dir.strip().strip("/\\")
+    if out_subdir:
+        base_dir = os.path.join(experiments_root, out_subdir)
+    else:
+        base_dir = experiments_root
+    os.makedirs(base_dir, exist_ok=True)
 
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = os.path.join(args.out_dir, stamp)
+    run_dir = os.path.join(base_dir, stamp)
     os.makedirs(run_dir, exist_ok=True)
 
     machine_specs = get_machine_specs()
