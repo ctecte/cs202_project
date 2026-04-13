@@ -1,0 +1,15 @@
+Testing 10 instances...
+
+[1/10] PSP1.SCH:  25 OK  (20.0s)
+[2/10] PSP10.SCH:  28 OK  (20.0s)
+[3/10] PSP100.SCH:  39 OK  (20.0s)
+[4/10] PSP101.SCH:  44 OK  (20.0s)
+[5/10] PSP102.SCH:  36 OK  (20.0s)
+[6/10] PSP103.SCH:  14 OK  (20.0s)
+[7/10] PSP104.SCH:  32 OK  (20.2s)
+[8/10] PSP105.SCH:  20 OK  (20.2s)
+[9/10] PSP106.SCH:  46 OK  (20.0s)
+[10/10] PSP107.SCH:  32 OK  (20.0s)
+
+FEASIBLE: 10, INFEASIBLE: 0
+Total: 200.4s (20.0s/instance)

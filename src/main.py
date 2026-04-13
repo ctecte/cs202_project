@@ -18,37 +18,43 @@ import time
 sys.path.insert(0, os.path.dirname(__file__))
 
 from parser import parse
-from scheduler import ssgs, get_makespan, order_by_id
+from scheduler import ssgs, get_makespan, order_by_id, order_by_lft
 from optimizer import genetic_algorithm
 from validator import validate, compute_makespan, test_all_instances
 
 
-TIME_BUDGET = 28  # seconds — leave 2s buffer from the 30s limit
+TIME_BUDGET = 30  # seconds hard deadline
+SAFETY_MARGIN = 5  # seconds safety buffer before deadline
 
 
 def solve(filepath):
     """
-    full pipeline: parse -> optimize -> return best schedule.
-    this is what gets called for each instance.
+    full pipeline: parse -> baseline heuristic -> GA optimization -> return best schedule.
+    MUST return valid schedule before TIME_BUDGET expires.
+    Balanced mode: order_by_id baseline + GA (0.5-1s) = ~0.1-0.2s total per instance.
     """
+    global_start = time.time()
     project = parse(filepath)
 
-    # --- STRATEGY ---
-    # step 1: get a quick baseline with a simple priority rule
-    # (this gives us a valid schedule immediately, even if the optimizer
-    #  hasn't been implemented yet)
+    # --- STEP 1: Get baseline with order_by_id ---
     baseline_order = order_by_id(project)
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
 
-    # step 2: try to improve with the optimizer
-    # TODO: uncomment this once optimizer is implemented
-    # optimized = genetic_algorithm(project, time_limit=TIME_BUDGET)
-    # if optimized:
-    #     opt_makespan = get_makespan(project, optimized)
-    #     if opt_makespan < best_makespan:
-    #         best_schedule = optimized
-    #         best_makespan = opt_makespan
+    # --- STEP 2: GA optimization (0.5-1s for meaningful improvement) ---
+    elapsed = time.time() - global_start
+    time_remaining = TIME_BUDGET - elapsed - SAFETY_MARGIN
+
+    if time_remaining > 0.5:  # only run GA if we have at least 0.5s
+        # Allocate 0.5-1s for GA
+        time_for_ga = min(time_remaining - 1.0, 1.0)  # leave 1s buffer
+
+        optimized = genetic_algorithm(project, time_limit=time_for_ga)
+        if optimized:
+            opt_makespan = get_makespan(project, optimized)
+            if opt_makespan < best_makespan:
+                best_schedule = optimized
+                best_makespan = opt_makespan
 
     return project, best_schedule
 

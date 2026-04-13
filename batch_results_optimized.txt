@@ -1,0 +1,203 @@
+Found 270 instances
+
+[  1/270] PSP1.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  2/270] PSP10.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  3/270] PSP100.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  4/270] PSP101.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  5/270] PSP102.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  6/270] PSP103.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  7/270] PSP104.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  8/270] PSP105.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[  9/270] PSP106.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 10/270] PSP107.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 11/270] PSP108.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 12/270] PSP109.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 13/270] PSP11.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 14/270] PSP110.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 15/270] PSP111.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 16/270] PSP112.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 17/270] PSP113.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 18/270] PSP114.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 19/270] PSP115.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 20/270] PSP116.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 21/270] PSP117.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 22/270] PSP118.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 23/270] PSP119.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 24/270] PSP12.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 25/270] PSP120.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 26/270] PSP121.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 27/270] PSP122.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 28/270] PSP123.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 29/270] PSP124.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 30/270] PSP125.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 31/270] PSP126.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 32/270] PSP127.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 33/270] PSP128.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 34/270] PSP129.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 35/270] PSP13.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 36/270] PSP130.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 37/270] PSP131.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 38/270] PSP132.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 39/270] PSP133.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 40/270] PSP134.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 41/270] PSP135.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 42/270] PSP136.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 43/270] PSP137.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 44/270] PSP138.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 45/270] PSP139.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 46/270] PSP14.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 47/270] PSP140.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 48/270] PSP141.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 49/270] PSP142.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 50/270] PSP143.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 51/270] PSP144.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 52/270] PSP145.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 53/270] PSP146.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 54/270] PSP147.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 55/270] PSP148.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 56/270] PSP149.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 57/270] PSP15.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 58/270] PSP150.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 59/270] PSP151.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 60/270] PSP152.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 61/270] PSP153.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 62/270] PSP154.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 63/270] PSP155.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 64/270] PSP156.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 65/270] PSP157.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 66/270] PSP158.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 67/270] PSP159.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 68/270] PSP16.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 69/270] PSP160.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 70/270] PSP161.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 71/270] PSP162.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 72/270] PSP163.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 73/270] PSP164.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 74/270] PSP165.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 75/270] PSP166.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 76/270] PSP167.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 77/270] PSP168.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 78/270] PSP169.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 79/270] PSP17.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 80/270] PSP170.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 81/270] PSP171.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 82/270] PSP172.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 83/270] PSP173.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 84/270] PSP174.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 85/270] PSP175.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 86/270] PSP176.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 87/270] PSP177.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 88/270] PSP178.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 89/270] PSP179.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 90/270] PSP18.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 91/270] PSP180.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 92/270] PSP181.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 93/270] PSP182.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 94/270] PSP183.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 95/270] PSP184.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 96/270] PSP185.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 97/270] PSP186.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 98/270] PSP187.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[ 99/270] PSP188.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[100/270] PSP189.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[101/270] PSP19.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[102/270] PSP190.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[103/270] PSP191.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[104/270] PSP192.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[105/270] PSP193.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[106/270] PSP194.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[107/270] PSP195.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[108/270] PSP196.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[109/270] PSP197.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[110/270] PSP198.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[111/270] PSP199.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[112/270] PSP2.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[113/270] PSP20.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[114/270] PSP200.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[115/270] PSP201.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[116/270] PSP202.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[117/270] PSP203.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[118/270] PSP204.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[119/270] PSP205.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[120/270] PSP206.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[121/270] PSP207.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[122/270] PSP208.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[123/270] PSP209.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[124/270] PSP21.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[125/270] PSP210.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[126/270] PSP211.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[127/270] PSP212.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[128/270] PSP213.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[129/270] PSP214.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[130/270] PSP215.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[131/270] PSP216.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[132/270] PSP217.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[133/270] PSP218.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[134/270] PSP219.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[135/270] PSP22.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[136/270] PSP220.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[137/270] PSP221.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[138/270] PSP222.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[139/270] PSP223.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[140/270] PSP224.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[141/270] PSP225.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[142/270] PSP226.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[143/270] PSP227.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[144/270] PSP228.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[145/270] PSP229.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[146/270] PSP23.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[147/270] PSP230.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[148/270] PSP231.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[149/270] PSP232.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[150/270] PSP233.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[151/270] PSP234.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[152/270] PSP235.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[153/270] PSP236.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[154/270] PSP237.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[155/270] PSP238.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[156/270] PSP239.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[157/270] PSP24.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[158/270] PSP240.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[159/270] PSP241.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[160/270] PSP242.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[161/270] PSP243.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[162/270] PSP244.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[163/270] PSP245.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[164/270] PSP246.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[165/270] PSP247.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[166/270] PSP248.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[167/270] PSP249.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[168/270] PSP25.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[169/270] PSP250.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[170/270] PSP251.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[171/270] PSP252.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[172/270] PSP253.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[173/270] PSP254.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[174/270] PSP255.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[175/270] PSP256.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[176/270] PSP257.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[177/270] PSP258.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[178/270] PSP259.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[179/270] PSP26.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[180/270] PSP260.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[181/270] PSP261.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[182/270] PSP262.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[183/270] PSP263.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[184/270] PSP264.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[185/270] PSP265.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[186/270] PSP266.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[187/270] PSP267.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[188/270] PSP268.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[189/270] PSP269.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[190/270] PSP27.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[191/270] PSP270.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[192/270] PSP28.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[193/270] PSP29.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[194/270] PSP3.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[195/270] PSP30.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[196/270] PSP31.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[197/270] PSP32.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[198/270] PSP33.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[199/270] PSP34.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[200/270] PSP35.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in
+[201/270] PSP36.SCH: ERROR — 'charmap' codec can't encode character '\u2713' in

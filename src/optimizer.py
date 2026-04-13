@@ -37,27 +37,25 @@ def random_activity_list(project):
 
     this always produces a valid ordering — predecessors come before successors.
     """
-    # TODO: implement this
-    # placed = set()
-    # placed.add(0)  # dummy start is already "done"
-    # activity_list = []
-    #
-    # while len(activity_list) < project.n:
-    #     eligible = []
-    #     for act_id in project.real_ids():
-    #         if act_id in placed:
-    #             continue
-    #         # check if all predecessors are placed
-    #         all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
-    #         if all_preds_done:
-    #             eligible.append(act_id)
-    #
-    #     pick = random.choice(eligible)
-    #     activity_list.append(pick)
-    #     placed.add(pick)
-    #
-    # return activity_list
-    pass
+    placed = set()
+    placed.add(0)  # dummy start is already "done"
+    activity_list = []
+
+    while len(activity_list) < project.n:
+        eligible = []
+        for act_id in project.real_ids():
+            if act_id in placed:
+                continue
+            # check if all predecessors are placed
+            all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
+            if all_preds_done:
+                eligible.append(act_id)
+
+        pick = random.choice(eligible)
+        activity_list.append(pick)
+        placed.add(pick)
+
+    return activity_list
 
 
 def is_precedence_feasible(project, activity_list):
@@ -66,16 +64,14 @@ def is_precedence_feasible(project, activity_list):
     for every edge i->j, i must appear before j in the list.
     useful for sanity checking after crossover/mutation.
     """
-    # TODO: implement
-    # position = {act: idx for idx, act in enumerate(activity_list)}
-    # for act in activity_list:
-    #     for succ_id in project.successors[act]:
-    #         if succ_id == project.n + 1:  # skip dummy end
-    #             continue
-    #         if position[act] >= position[succ_id]:
-    #             return False
-    # return True
-    pass
+    position = {act: idx for idx, act in enumerate(activity_list)}
+    for act in activity_list:
+        for succ_id in project.successors[act]:
+            if succ_id == project.n + 1:  # skip dummy end
+                continue
+            if position[act] >= position[succ_id]:
+                return False
+    return True
 
 
 # ========================================
@@ -87,29 +83,69 @@ def tournament_select(population, fitnesses, tournament_size=3):
     pick a few random individuals, return the best one.
     standard tournament selection — simple and works well.
     """
-    # TODO: implement
-    # pick `tournament_size` random indices from population
-    # return the one with the best (lowest) fitness
-    pass
+    indices = random.sample(range(len(population)), tournament_size)
+    best_idx = min(indices, key=lambda i: fitnesses[i])
+    return population[best_idx]
 
 
 def crossover(parent1, parent2, project):
     """
     precedence-preserving crossover.
 
-    one way to do it:
+    approach:
       1. randomly pick ~half the positions from parent1
       2. keep those activities in the same positions
       3. fill in the remaining activities in the order they appear in parent2
-      4. check that the result is still precedence-feasible
-
-    or simpler: two-point crossover then repair if needed.
-
-    TODO: implement — this is the trickiest part of the GA.
-    make sure the result is always a valid precedence-feasible permutation.
+      4. repair to ensure precedence is respected
     """
-    # TODO: implement
-    pass
+    n = len(parent1)
+    # randomly pick ~half the positions to keep from parent1
+    keep_positions = set(random.sample(range(n), n // 2))
+
+    child = [None] * n
+    taken = set()
+
+    # keep activities from parent1 at selected positions
+    for pos in keep_positions:
+        child[pos] = parent1[pos]
+        taken.add(parent1[pos])
+
+    # fill in remaining positions with activities from parent2 in order
+    pos_to_fill = [i for i in range(n) if i not in keep_positions]
+    for pos in pos_to_fill:
+        for act in parent2:
+            if act not in taken:
+                child[pos] = act
+                taken.add(act)
+                break
+
+    # repair to ensure precedence-feasibility via topological sort
+    position_map = {act: i for i, act in enumerate(child) if act is not None}
+    placed = set()
+    placed.add(0)  # dummy start
+    result = []
+
+    while len(result) < n:
+        eligible = []
+        for act_id in project.real_ids():
+            if act_id in placed:
+                continue
+            all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
+            if all_preds_done:
+                eligible.append(act_id)
+
+        # pick the one with smallest position in original child (stable sorting)
+        if eligible:
+            pick = min(eligible, key=lambda x: position_map.get(x, float('inf')))
+        else:
+            # shouldn't happen if project structure is valid
+            pick = eligible[0] if eligible else None
+
+        if pick:
+            result.append(pick)
+            placed.add(pick)
+
+    return result
 
 
 def mutate(activity_list, project, mutation_rate=0.1):
@@ -118,17 +154,17 @@ def mutate(activity_list, project, mutation_rate=0.1):
 
     simple approach: with some probability, swap two adjacent activities
     (only if the swap doesn't break precedence).
-
-    TODO: implement
     """
-    # TODO: implement
-    # for i in range(len(activity_list) - 1):
-    #     if random.random() < mutation_rate:
-    #         # try swapping activity_list[i] and activity_list[i+1]
-    #         # only do it if it doesn't violate precedence
-    #         pass
-    # return activity_list
-    pass
+    result = activity_list[:]
+    for i in range(len(result) - 1):
+        if random.random() < mutation_rate:
+            # try swapping activity_list[i] and activity_list[i+1]
+            result[i], result[i + 1] = result[i + 1], result[i]
+            # check if still precedence-feasible
+            if not is_precedence_feasible(project, result):
+                # revert swap if it breaks precedence
+                result[i], result[i + 1] = result[i + 1], result[i]
+    return result
 
 
 def genetic_algorithm(project, time_limit=25):
@@ -149,54 +185,48 @@ def genetic_algorithm(project, time_limit=25):
          d. evaluate child
          e. if child is better than worst in population, replace it
       4. return the best schedule found
-
-    TODO: implement the full loop. suggested population size: 50-100.
     """
     start_time = time.time()
-    pop_size = 50
+    pop_size = 40
     best_schedule = None
     best_makespan = float('inf')
 
     # --- STEP 1: generate initial population ---
-    # TODO: create pop_size random activity lists
-    # population = [random_activity_list(project) for _ in range(pop_size)]
+    population = [random_activity_list(project) for _ in range(pop_size)]
 
     # --- STEP 2: evaluate initial population ---
-    # TODO: for each individual, run SSGS and record the makespan
-    # fitnesses = []
-    # for individual in population:
-    #     sched = ssgs(project, individual)
-    #     ms = get_makespan(project, sched)
-    #     fitnesses.append(ms)
-    #     if ms < best_makespan:
-    #         best_makespan = ms
-    #         best_schedule = sched
+    fitnesses = []
+    for individual in population:
+        sched = ssgs(project, individual)
+        ms = get_makespan(project, sched)
+        fitnesses.append(ms)
+        if ms < best_makespan:
+            best_makespan = ms
+            best_schedule = sched
 
     # --- STEP 3: main loop ---
-    # TODO: keep improving until time runs out
-    # generation = 0
-    # while time.time() - start_time < time_limit:
-    #     parent1 = tournament_select(population, fitnesses)
-    #     parent2 = tournament_select(population, fitnesses)
-    #     child = crossover(parent1, parent2, project)
-    #     child = mutate(child, project)
-    #
-    #     child_sched = ssgs(project, child)
-    #     child_ms = get_makespan(project, child_sched)
-    #
-    #     # replace worst individual if child is better
-    #     worst_idx = fitnesses.index(max(fitnesses))
-    #     if child_ms < fitnesses[worst_idx]:
-    #         population[worst_idx] = child
-    #         fitnesses[worst_idx] = child_ms
-    #
-    #     if child_ms < best_makespan:
-    #         best_makespan = child_ms
-    #         best_schedule = child_sched
-    #
-    #     generation += 1
+    generation = 0
+    while time.time() - start_time < time_limit:
+        parent1 = tournament_select(population, fitnesses)
+        parent2 = tournament_select(population, fitnesses)
+        child = crossover(parent1, parent2, project)
+        child = mutate(child, project, mutation_rate=0.1)
 
-    # print(f"GA done — {generation} generations, best makespan: {best_makespan}")
+        child_sched = ssgs(project, child)
+        child_ms = get_makespan(project, child_sched)
+
+        # replace worst individual if child is better
+        worst_idx = fitnesses.index(max(fitnesses))
+        if child_ms < fitnesses[worst_idx]:
+            population[worst_idx] = child
+            fitnesses[worst_idx] = child_ms
+
+        if child_ms < best_makespan:
+            best_makespan = child_ms
+            best_schedule = child_sched
+
+        generation += 1
+
     return best_schedule
 
 

@@ -127,6 +127,10 @@ def test_all_instances(folder, solver_fn):
     results = []
     num_valid = 0
     total_makespan = 0
+    best_makespan = float('inf')
+    worst_makespan = 0
+    best_instance = None
+    worst_instance = None
 
     for filename in sch_files:
         filepath = os.path.join(folder, filename)
@@ -142,22 +146,34 @@ def test_all_instances(folder, solver_fn):
             if valid:
                 num_valid += 1
                 total_makespan += makespan
+                if makespan < best_makespan:
+                    best_makespan = makespan
+                    best_instance = filename
+                if makespan > worst_makespan:
+                    worst_makespan = makespan
+                    worst_instance = filename
                 status = "OK"
             else:
                 status = f"INVALID ({len(violations)} violations)"
 
             results.append((filename, makespan, elapsed, status))
-            print(f"  {filename}: makespan={makespan}, time={elapsed:.2f}s, {status}")
+            print(f"  {filename}: makespan={makespan}, time={elapsed:.2f}s, {status}", flush=True)
 
         except Exception as e:
             elapsed = time.time() - start
             results.append((filename, -1, elapsed, f"ERROR: {e}"))
-            print(f"  {filename}: ERROR — {e}")
+            print(f"  {filename}: ERROR — {e}", flush=True)
+
+    batch_end = time.time()
+    batch_duration = batch_end - batch_start
 
     print(f"\n{'='*50}")
     print(f"valid: {num_valid}/{len(sch_files)}")
     if num_valid > 0:
         print(f"avg makespan (valid only): {total_makespan / num_valid:.1f}")
+        print(f"best makespan: {best_makespan} ({best_instance})")
+        print(f"worst makespan: {worst_makespan} ({worst_instance})")
+    print(f"total batch time: {batch_duration:.1f}s")
     print(f"{'='*50}")
 
     return results

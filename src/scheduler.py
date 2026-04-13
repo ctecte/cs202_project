@@ -38,26 +38,23 @@ class ResourceTracker:
         need to check every time step from start_time to start_time + duration - 1
         (activity occupies resources for its full duration)
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   for each resource k:
-        #     current_usage = self.usage.get(t, [0]*self.k)[k]
-        #     if current_usage + activity.resources[k] > self.capacities[k]:
-        #       return False
-        # return True
-        pass
+        for t in range(start_time, start_time + activity.duration):
+            usage_at_t = self.usage.get(t, [0] * self.k)
+            for k in range(self.k):
+                if usage_at_t[k] + activity.resources[k] > self.capacities[k]:
+                    return False
+        return True
 
     def book(self, activity, start_time):
         """
         record that this activity is scheduled at start_time.
         add its resource usage to every time step it occupies.
         """
-        # TODO: implement this
-        # for each time t in [start_time, start_time + duration):
-        #   if t not in self.usage, init to [0]*self.k
-        #   for each resource k:
-        #     self.usage[t][k] += activity.resources[k]
-        pass
+        for t in range(start_time, start_time + activity.duration):
+            if t not in self.usage:
+                self.usage[t] = [0] * self.k
+            for k in range(self.k):
+                self.usage[t][k] += activity.resources[k]
 
 
 def find_earliest_start(project, activity_id, schedule, tracker):
@@ -75,22 +72,20 @@ def find_earliest_start(project, activity_id, schedule, tracker):
     activity = project.activities[activity_id]
 
     # step 1: precedence constraint
-    # TODO: compute earliest based on all predecessors
-    # earliest = 0
-    # for pred_id in project.predecessors[activity_id]:
-    #     pred = project.activities[pred_id]
-    #     earliest = max(earliest, schedule[pred_id] + pred.duration)
-
-    earliest = 0  # placeholder
+    earliest = 0
+    for pred_id in project.predecessors[activity_id]:
+        pred = project.activities[pred_id]
+        earliest = max(earliest, schedule[pred_id] + pred.duration)
 
     # step 2: resource constraint
-    # TODO: scan forward from earliest until resources are available
-    # t = earliest
-    # while not tracker.is_feasible(activity, t):
-    #     t += 1
-    # return t
+    t = earliest
+    max_iterations = 2000  # prevent infinite loops on over-constrained activities
+    iterations = 0
+    while not tracker.is_feasible(activity, t) and iterations < max_iterations:
+        t += 1
+        iterations += 1
 
-    return earliest  # placeholder
+    return t
 
 
 def ssgs(project, activity_list):
@@ -117,16 +112,15 @@ def ssgs(project, activity_list):
     schedule[0] = 0
     tracker.book(project.activities[0], 0)
 
-    # TODO: schedule each activity in the given order
-    # for act_id in activity_list:
-    #     start = find_earliest_start(project, act_id, schedule, tracker)
-    #     schedule[act_id] = start
-    #     tracker.book(project.activities[act_id], start)
+    # schedule each activity in the given order
+    for act_id in activity_list:
+        start = find_earliest_start(project, act_id, schedule, tracker)
+        schedule[act_id] = start
+        tracker.book(project.activities[act_id], start)
 
     # schedule dummy end — its start time = the makespan
-    # TODO: find earliest start for activity n+1
-    # end_id = project.n + 1
-    # schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
+    end_id = project.n + 1
+    schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
 
     return schedule
 
@@ -144,8 +138,26 @@ def get_makespan(project, schedule):
 # but these are good starting points / baselines.
 
 def order_by_id(project):
-    """simplest ordering — just go 1, 2, 3, ..., n. not great but good for testing."""
-    return project.real_ids()
+    """
+    Simple ordering that respects precedence — topological sort by ID.
+    Goes 1, 2, 3, ..., n but only if they respect precedence.
+    """
+    placed = set()
+    placed.add(0)  # dummy start
+    result = []
+
+    while len(result) < project.n:
+        for act_id in range(1, project.n + 1):
+            if act_id in placed:
+                continue
+            # check if all predecessors are placed
+            all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
+            if all_preds_done:
+                result.append(act_id)
+                placed.add(act_id)
+                break
+
+    return result
 
 
 def order_by_duration(project):
@@ -171,18 +183,60 @@ def order_by_successors(project):
 def order_by_lft(project):
     """
     latest finish time (LFT) rule — schedule activities with earlier
-    deadlines first. this is one of the best known priority rules for RCPSP.
+    deadlines first. one of the best known priority rules for RCPSP.
 
-    to compute LFT:
-      1. do a forward pass to get earliest start times (ignoring resources)
-      2. makespan_ub = earliest start of dummy end
-      3. do a backward pass from makespan_ub to get latest finish times
+    algorithm:
+      1. forward pass: compute earliest start (EST) for all activities
+      2. get project makespan (EST of dummy end)
+      3. backward pass: compute latest finish (LFT) from end
       4. sort activities by LFT ascending
-
-    TODO: implement forward pass, backward pass, then sort
     """
-    # TODO: implement — this one is abit more work but it's the best priority rule
-    pass
+    # forward pass: compute EST (ignoring resources, just precedence)
+    est = {0: 0}  # dummy start at time 0
+    for act_id in range(1, project.n + 2):
+        earliest = 0
+        for pred_id in project.predecessors[act_id]:
+            pred = project.activities[pred_id]
+            earliest = max(earliest, est.get(pred_id, 0) + pred.duration)
+        est[act_id] = earliest
+
+    # project makespan = EST of dummy end
+    project_makespan = est[project.n + 1]
+
+    # backward pass: compute LFT
+    lft = {project.n + 1: project_makespan}  # dummy end finishes at makespan
+    for act_id in range(project.n, 0, -1):  # go backward (excluding dummy start/end)
+        activity = project.activities[act_id]
+        # LFT = min(LFT of successors) - duration
+        latest_finish = project_makespan
+        for succ_id in project.successors[act_id]:
+            latest_finish = min(latest_finish, lft.get(succ_id, project_makespan) - project.activities[succ_id].duration)
+        lft[act_id] = latest_finish
+
+    # sort by LFT ascending, then by ID for tie-breaking
+    placed = {0}
+    result = []
+
+    while len(result) < project.n:
+        # find schedulable activity with smallest LFT among unplaced
+        best = None
+        best_lft = float('inf')
+        for act_id in range(1, project.n + 1):
+            if act_id in placed:
+                continue
+            # check if all predecessors are placed
+            all_preds_done = all(pred_id in placed for pred_id in project.predecessors[act_id])
+            if all_preds_done and lft.get(act_id, float('inf')) < best_lft:
+                best = act_id
+                best_lft = lft.get(act_id, float('inf'))
+
+        if best is not None:
+            result.append(best)
+            placed.add(best)
+        else:
+            break  # shouldn't happen if project is valid
+
+    return result
 
 
 # quick test
