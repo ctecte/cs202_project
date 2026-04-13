@@ -16,14 +16,16 @@ from models import Project
 
 def check_precedence(project, schedule):
     """
-    check all precedence constraints.
-    for each edge i -> j:
-        S_j must be >= S_i + d_i
+    check precedence constraints for true forward edges only.
+    an edge i->j is a real precedence constraint only if i is in predecessors[j]
+    (the parser strips out negative-lag and cycle-creating edges).
+    constraint: S_j >= S_i + d_i
 
     returns a list of violation strings. empty list = all good.
     """
     violations = []
 
+<<<<<<< Updated upstream
     # TODO: implement
     # for act_id in project.all_ids():
     #     act = project.activities[act_id]
@@ -33,6 +35,18 @@ def check_precedence(project, schedule):
     #                 f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
     #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
     #             )
+=======
+    for act_id in project.all_ids():
+        act = project.activities[act_id]
+        for succ_id in project.successors[act_id]:
+            if act_id not in project.predecessors[succ_id]:
+                continue  # not a true precedence edge
+            if schedule[succ_id] < schedule[act_id] + act.duration:
+                violations.append(
+                    f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
+                    f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
+                )
+>>>>>>> Stashed changes
 
     return violations
 

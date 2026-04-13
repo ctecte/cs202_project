@@ -41,6 +41,7 @@ def solve(filepath):
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
 
+<<<<<<< Updated upstream
     # step 2: try to improve with the optimizer
     # TODO: uncomment this once optimizer is implemented
     # optimized = genetic_algorithm(project, time_limit=TIME_BUDGET)
@@ -49,6 +50,38 @@ def solve(filepath):
     #     if opt_makespan < best_makespan:
     #         best_schedule = optimized
     #         best_makespan = opt_makespan
+=======
+    # run optimizer for the full time budget
+    optimized = optimize(project, time_limit=TIME_LIMIT)
+    if optimized is not None:
+        opt_makespan = get_makespan(project, optimized)
+        if opt_makespan < best_makespan:
+            best_schedule = optimized
+
+    return project, best_schedule
+
+
+BATCH_TIME_LIMIT = 1.0  # seconds per instance in batch mode
+
+
+def solve_fast(filepath):
+    """batch mode solve — optimize with a shorter time budget per instance."""
+    project = parse(filepath)
+
+    try:
+        baseline_order = order_by_lft(project)
+    except Exception:
+        baseline_order = order_by_id(project)
+
+    best_schedule = ssgs(project, baseline_order)
+    best_makespan = get_makespan(project, best_schedule)
+
+    optimized = optimize(project, time_limit=BATCH_TIME_LIMIT)
+    if optimized is not None:
+        opt_makespan = get_makespan(project, optimized)
+        if opt_makespan < best_makespan:
+            best_schedule = optimized
+>>>>>>> Stashed changes
 
     return project, best_schedule
 

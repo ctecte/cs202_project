@@ -18,14 +18,23 @@ from models import Project, Activity
 
 class ResourceTracker:
     """
+<<<<<<< Updated upstream
     keeps track of how much resource is being used at each time step.
     when we schedule an activity, we "book" resources for its duration.
     then we can check if there's enough capacity before scheduling the next one.
+=======
+    Tracks renewable resource usage over time using a list-based array.
+    Faster than a dict for dense time horizons: avoids hash overhead and
+    allows direct indexed access.
+    usage[t][k] = amount of resource k used at time t
+>>>>>>> Stashed changes
     """
+    _INITIAL_HORIZON = 200  # pre-allocate; grows as needed
 
     def __init__(self, capacities):
         self.capacities = capacities
         self.k = len(capacities)
+<<<<<<< Updated upstream
         # usage[t] = [amount used of R1, R2, ..., RK at time t]
         # using a dict so we don't need to preallocate — time steps are sparse
         self.usage = {}
@@ -58,6 +67,48 @@ class ResourceTracker:
         #   for each resource k:
         #     self.usage[t][k] += activity.resources[k]
         pass
+=======
+        self._horizon = self._INITIAL_HORIZON
+        # flat list of lists — indexed directly, no dict lookup
+        self.usage = [[0] * self.k for _ in range(self._horizon)]
+
+    def _ensure(self, t):
+        if t >= self._horizon:
+            new_horizon = max(t + 1, self._horizon * 2)
+            extension = [[0] * self.k for _ in range(new_horizon - self._horizon)]
+            self.usage.extend(extension)
+            self._horizon = new_horizon
+
+    def is_feasible(self, activity, start_time):
+        if activity.duration == 0:
+            return True
+        end = start_time + activity.duration
+        if end > self._horizon:
+            return True  # no bookings beyond horizon → always feasible
+        res = activity.resources
+        usage = self.usage
+        caps = self.capacities
+        k = self.k
+        for t in range(start_time, end):
+            row = usage[t]
+            for r in range(k):
+                if row[r] + res[r] > caps[r]:
+                    return False
+        return True
+
+    def book(self, activity, start_time):
+        if activity.duration == 0:
+            return
+        end = start_time + activity.duration
+        self._ensure(end - 1)
+        res = activity.resources
+        usage = self.usage
+        k = self.k
+        for t in range(start_time, end):
+            row = usage[t]
+            for r in range(k):
+                row[r] += res[r]
+>>>>>>> Stashed changes
 
 
 def find_earliest_start(project, activity_id, schedule, tracker):
