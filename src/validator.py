@@ -24,15 +24,14 @@ def check_precedence(project, schedule):
     """
     violations = []
 
-    # TODO: implement
-    # for act_id in project.all_ids():
-    #     act = project.activities[act_id]
-    #     for succ_id in project.successors[act_id]:
-    #         if schedule[succ_id] < schedule[act_id] + act.duration:
-    #             violations.append(
-    #                 f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
-    #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
-    #             )
+    for act_id in project.all_ids():
+        act = project.activities[act_id]
+        for succ_id in project.successors[act_id]:
+            if schedule[succ_id] < schedule[act_id] + act.duration:
+                violations.append(
+                    f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
+                    f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
+                )
 
     return violations
 
@@ -51,27 +50,50 @@ def check_resources(project, schedule):
     """
     violations = []
 
-    # TODO: implement
-    # first, find the time range we need to check
-    # max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
-    #
-    # for t in range(max_time):
-    #     usage = [0] * project.k
-    #     for act_id in project.all_ids():
-    #         s = schedule[act_id]
-    #         d = project.activities[act_id].duration
-    #         if s <= t < s + d:  # activity is running at time t
-    #             for r in range(project.k):
-    #                 usage[r] += project.activities[act_id].resources[r]
-    #
-    #     for r in range(project.k):
-    #         if usage[r] > project.capacities[r]:
-    #             violations.append(
-    #                 f"RESOURCE FAIL: time {t}, resource R{r+1}: "
-    #                 f"usage {usage[r]} > capacity {project.capacities[r]}"
-    #             )
+    # find the time range we need to check
+    max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
+
+    if max_time == 0:
+        return violations
+
+    for t in range(max_time):
+        usage = [0] * project.k
+        for act_id in project.all_ids():
+            s = schedule[act_id]
+            d = project.activities[act_id].duration
+            if s <= t < s + d:  # activity is running at time t
+                for r in range(project.k):
+                    usage[r] += project.activities[act_id].resources[r]
+
+        for r in range(project.k):
+            if usage[r] > project.capacities[r]:
+                violations.append(
+                    f"RESOURCE FAIL: time {t}, resource R{r+1}: "
+                    f"usage {usage[r]} > capacity {project.capacities[r]}"
+                )
 
     return violations
+
+
+def check_no_cycles(project):
+    """
+    detect cycles in the precedence graph via Kahn's algorithm.
+    if topo sort can't reach all nodes, there's a cycle.
+    returns a list of violation strings. empty = no cycles.
+    """
+    in_degree = {i: len(project.predecessors[i]) for i in project.all_ids()}
+    queue = [i for i in project.all_ids() if in_degree[i] == 0]
+    visited = 0
+    while queue:
+        node = queue.pop()
+        visited += 1
+        for succ in project.successors[node]:
+            in_degree[succ] -= 1
+            if in_degree[succ] == 0:
+                queue.append(succ)
+    if visited != len(project.all_ids()):
+        return ["CYCLE DETECTED: precedence graph contains a cycle"]
+    return []
 
 
 def validate(project, schedule):
@@ -79,6 +101,11 @@ def validate(project, schedule):
     run all checks on a schedule. returns (is_valid, list_of_violations).
     """
     violations = []
+
+    # check for cycles in the project graph first
+    violations += check_no_cycles(project)
+    if violations:
+        return False, violations
 
     # basic sanity check — make sure every activity has a start time
     for act_id in project.all_ids():
@@ -110,13 +137,6 @@ def test_all_instances(folder, solver_fn):
     run the solver on every .SCH file in a folder and report results.
 
     solver_fn: a function that takes a filepath and returns a (project, schedule) tuple
-
-    TODO: implement — this should:
-      1. find all .SCH files in the folder
-      2. for each file, run the solver
-      3. validate the schedule
-      4. print a summary (makespan, valid/invalid, time taken)
-      5. at the end, print aggregate stats (avg makespan, num valid, etc.)
     """
     from parser import parse
     import time
@@ -127,6 +147,9 @@ def test_all_instances(folder, solver_fn):
     results = []
     num_valid = 0
     total_makespan = 0
+    best_makespan = float('inf')
+    worst_makespan = 0
+    batch_start = time.time()
 
     for filename in sch_files:
         filepath = os.path.join(folder, filename)
@@ -142,6 +165,8 @@ def test_all_instances(folder, solver_fn):
             if valid:
                 num_valid += 1
                 total_makespan += makespan
+                best_makespan = min(best_makespan, makespan)
+                worst_makespan = max(worst_makespan, makespan)
                 status = "OK"
             else:
                 status = f"INVALID ({len(violations)} violations)"
@@ -154,10 +179,14 @@ def test_all_instances(folder, solver_fn):
             results.append((filename, -1, elapsed, f"ERROR: {e}"))
             print(f"  {filename}: ERROR — {e}")
 
+    total_time = time.time() - batch_start
     print(f"\n{'='*50}")
     print(f"valid: {num_valid}/{len(sch_files)}")
     if num_valid > 0:
         print(f"avg makespan (valid only): {total_makespan / num_valid:.1f}")
+        print(f"best makespan: {best_makespan}")
+        print(f"worst makespan: {worst_makespan}")
+    print(f"total time: {total_time:.2f}s")
     print(f"{'='*50}")
 
     return results
