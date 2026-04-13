@@ -18,40 +18,31 @@ import time
 sys.path.insert(0, os.path.dirname(__file__))
 
 from parser import parse
-from scheduler import ssgs, get_makespan, order_by_id
-from optimizer import genetic_algorithm
+from scheduler import ssgs, get_makespan, order_by_lft, order_by_id
+from optimizer import optimize
 from validator import validate, compute_makespan, test_all_instances
 
 
-TIME_BUDGET = 28  # seconds — leave 2s buffer from the 30s limit
+TIME_LIMIT = 28  # seconds — leave 2s buffer from the 30s limit
 
 
 def solve(filepath):
     """
     full pipeline: parse -> optimize -> return best schedule.
-    this is what gets called for each instance.
+    single instance mode uses the full time budget.
     """
     project = parse(filepath)
 
-    # --- STRATEGY ---
     # step 1: get a quick baseline with a simple priority rule
-    # (this gives us a valid schedule immediately, even if the optimizer
-    #  hasn't been implemented yet)
-    baseline_order = order_by_id(project)
+    try:
+        baseline_order = order_by_lft(project)
+    except Exception:
+        baseline_order = order_by_id(project)
+
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
 
-<<<<<<< Updated upstream
-    # step 2: try to improve with the optimizer
-    # TODO: uncomment this once optimizer is implemented
-    # optimized = genetic_algorithm(project, time_limit=TIME_BUDGET)
-    # if optimized:
-    #     opt_makespan = get_makespan(project, optimized)
-    #     if opt_makespan < best_makespan:
-    #         best_schedule = optimized
-    #         best_makespan = opt_makespan
-=======
-    # run optimizer for the full time budget
+    # step 2: run optimizer for the full time budget
     optimized = optimize(project, time_limit=TIME_LIMIT)
     if optimized is not None:
         opt_makespan = get_makespan(project, optimized)
@@ -81,7 +72,6 @@ def solve_fast(filepath):
         opt_makespan = get_makespan(project, optimized)
         if opt_makespan < best_makespan:
             best_schedule = optimized
->>>>>>> Stashed changes
 
     return project, best_schedule
 
@@ -115,25 +105,21 @@ def main():
         sys.exit(1)
 
     if sys.argv[1] == "--batch":
-        # batch mode — run all instances in a folder
         folder = sys.argv[2] if len(sys.argv) > 2 else "../sm_j10"
-        test_all_instances(folder, solve)
+        test_all_instances(folder, solve_fast)
     else:
-        # single instance mode
         filepath = sys.argv[1]
         start = time.time()
 
         project, schedule = solve(filepath)
         elapsed = time.time() - start
 
-        # validate
         valid, violations = validate(project, schedule)
 
-        # print results
         print_schedule(project, schedule)
         print(f"\nvalid: {valid}")
         if not valid:
-            for v in violations[:10]:  # only show first 10
+            for v in violations[:10]:
                 print(f"  {v}")
         print(f"time: {elapsed:.2f}s")
 

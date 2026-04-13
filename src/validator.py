@@ -25,17 +25,6 @@ def check_precedence(project, schedule):
     """
     violations = []
 
-<<<<<<< Updated upstream
-    # TODO: implement
-    # for act_id in project.all_ids():
-    #     act = project.activities[act_id]
-    #     for succ_id in project.successors[act_id]:
-    #         if schedule[succ_id] < schedule[act_id] + act.duration:
-    #             violations.append(
-    #                 f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
-    #                 f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
-    #             )
-=======
     for act_id in project.all_ids():
         act = project.activities[act_id]
         for succ_id in project.successors[act_id]:
@@ -46,7 +35,6 @@ def check_precedence(project, schedule):
                     f"PRECEDENCE FAIL: activity {act_id} -> {succ_id}, "
                     f"S_{succ_id}={schedule[succ_id]} < S_{act_id}+d_{act_id}={schedule[act_id]+act.duration}"
                 )
->>>>>>> Stashed changes
 
     return violations
 

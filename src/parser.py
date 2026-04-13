@@ -36,6 +36,10 @@ def parse(filepath):
     n = int(header[0])
     k = int(header[1])
 
+    # j10 format: "n k"  (no mode column in data lines)
+    # j20 format: "n k 0 0"  (has a mode column in every data line)
+    has_mode = len(header) > 2
+
     total_activities = n + 2  # including dummy start and end
 
     successors = {}
@@ -56,14 +60,16 @@ def parse(filepath):
             if t.startswith('[') and t.endswith(']'):
                 lag_values.append(int(t[1:-1]))
 
-        # non-bracketed tokens: activity_id  mode  num_successors  succ1  succ2  ...
+        # j10: activity_id  num_successors  succ1  succ2  ...
+        # j20: activity_id  mode  num_successors  succ1  succ2  ...
         tokens = [t for t in raw_tokens if not t.startswith('[')]
         activity_id = int(tokens[0])
-        num_succ = int(tokens[2])
+        col = 2 if has_mode else 1  # skip mode column if present
+        num_succ = int(tokens[col])
 
         succs = []
         for j in range(num_succ):
-            succs.append(int(tokens[3 + j]))
+            succs.append(int(tokens[col + 1 + j]))
 
         successors[activity_id] = succs
 
@@ -82,13 +88,15 @@ def parse(filepath):
     for line_idx in range(total_activities + 1, 2 * total_activities + 1):
         line = lines[line_idx]
 
-        # non-bracketed tokens: activity_id  mode  duration  r1  r2  ...
+        # j10: activity_id  duration  r1  r2  ...
+        # j20: activity_id  mode  duration  r1  r2  ...
         tokens = [t for t in line.split() if not t.startswith('[')]
         activity_id = int(tokens[0])
-        duration = int(tokens[2])
+        dur_col = 2 if has_mode else 1
+        duration = int(tokens[dur_col])
 
         resources = []
-        for val in tokens[3:]:
+        for val in tokens[dur_col + 1:]:
             resources.append(int(val))
 
         activities[activity_id] = Activity(id=activity_id, duration=duration, resources=resources)
