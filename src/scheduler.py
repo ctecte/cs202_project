@@ -59,7 +59,7 @@ class ResourceTracker:
                 self.usage[t][r] += activity.resources[r]
 
 
-def find_earliest_start(project, activity_id, schedule, tracker):
+def find_earliest_start(project, activity_id, schedule, tracker, max_horizon=None):
     """
     find the earliest time we can start this activity.
 
@@ -82,9 +82,16 @@ def find_earliest_start(project, activity_id, schedule, tracker):
         earliest = max(earliest, schedule[pred_id] + pred.duration)
 
     # step 2: resource constraint
+    if max_horizon is None:
+        max_horizon = sum(project.activities[i].duration for i in project.all_ids())
+
     t = earliest
     while not tracker.is_feasible(activity, t):
         t += 1
+        if t > max_horizon:
+            raise ValueError(
+                f"No feasible start found for activity {activity_id} within horizon {max_horizon}"
+            )
     return t
 
 
@@ -107,6 +114,16 @@ def ssgs(project, activity_list):
     """
     tracker = ResourceTracker(project.capacities)
     schedule = {}
+    max_horizon = sum(project.activities[i].duration for i in project.all_ids())
+
+    # Fail fast on impossible renewable demand to avoid infinite scans.
+    for act_id in project.real_ids():
+        act = project.activities[act_id]
+        for r in range(project.k):
+            if act.resources[r] > project.capacities[r]:
+                raise ValueError(
+                    f"Activity {act_id} requires R{r + 1}={act.resources[r]} > cap {project.capacities[r]}"
+                )
 
     # schedule dummy start at time 0
     schedule[0] = 0
@@ -118,13 +135,13 @@ def ssgs(project, activity_list):
             continue
         if act_id in schedule:
             continue
-        start = find_earliest_start(project, act_id, schedule, tracker)
+        start = find_earliest_start(project, act_id, schedule, tracker, max_horizon=max_horizon)
         schedule[act_id] = start
         tracker.book(project.activities[act_id], start)
 
     # schedule dummy end — its start time = the makespan
     end_id = project.n + 1
-    schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker)
+    schedule[end_id] = find_earliest_start(project, end_id, schedule, tracker, max_horizon=max_horizon)
 
     return schedule
 
@@ -132,6 +149,35 @@ def ssgs(project, activity_list):
 def get_makespan(project, schedule):
     """just return the start time of the dummy end activity — that's the makespan."""
     return schedule.get(project.n + 1, -1)
+
+
+def precedence_feasible_order(project, priority_key=None):
+    """
+    Build a precedence-feasible activity list using topological selection.
+    When multiple activities are eligible, pick by `priority_key(activity_id)` then id.
+    """
+    placed = {0}
+    remaining = set(project.real_ids())
+    order = []
+
+    if priority_key is None:
+        priority_key = lambda aid: aid
+
+    while remaining:
+        eligible = [
+            aid for aid in remaining
+            if all(pred in placed for pred in project.predecessors[aid])
+        ]
+        if not eligible:
+            # Defensive fallback for malformed/cyclic input.
+            eligible = list(remaining)
+
+        pick = min(eligible, key=lambda aid: (priority_key(aid), aid))
+        order.append(pick)
+        placed.add(pick)
+        remaining.remove(pick)
+
+    return order
 
 
 # ========================================
@@ -143,7 +189,7 @@ def get_makespan(project, schedule):
 
 def order_by_id(project):
     """simplest ordering — just go 1, 2, 3, ..., n. not great but good for testing."""
-    return project.real_ids()
+    return precedence_feasible_order(project, priority_key=lambda aid: aid)
 
 
 def order_by_duration(project):
@@ -151,9 +197,7 @@ def order_by_duration(project):
     shortest processing time first.
     TODO: sort real activities by duration (ascending)
     """
-    ids = project.real_ids()
-    ids.sort(key=lambda aid: (project.activities[aid].duration, aid))
-    return ids
+    return precedence_feasible_order(project, priority_key=lambda aid: project.activities[aid].duration)
 
 
 def order_by_successors(project):
@@ -179,9 +223,7 @@ def order_by_successors(project):
         memo[aid] = len(visited)
         return memo[aid]
 
-    ids = project.real_ids()
-    ids.sort(key=lambda aid: (-total_successors(aid), aid))
-    return ids
+    return precedence_feasible_order(project, priority_key=lambda aid: -total_successors(aid))
 
 
 def order_by_lft(project):
@@ -221,9 +263,10 @@ def order_by_lft(project):
         else:
             lft[aid] = ub
 
-    ids = project.real_ids()
-    ids.sort(key=lambda aid: (lft[aid], project.activities[aid].duration, aid))
-    return ids
+    return precedence_feasible_order(
+        project,
+        priority_key=lambda aid: (lft[aid], project.activities[aid].duration),
+    )
 
 
 # quick test

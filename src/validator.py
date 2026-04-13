@@ -11,6 +11,8 @@ also handles batch testing across all instances.
 """
 
 import os
+import sys
+import re
 from models import Project
 
 
@@ -118,14 +120,30 @@ def test_all_instances(folder, solver_fn):
     from parser import parse
     import time
 
-    sch_files = sorted([f for f in os.listdir(folder) if f.endswith('.SCH')])
+    def natural_psp_key(name):
+        stem = os.path.splitext(name)[0]
+        m = re.search(r"([0-9]+)$", stem)
+        if m:
+            return (int(m.group(1)), name)
+        return (10**9, name)
+
+    sch_files = sorted([f for f in os.listdir(folder) if f.endswith('.SCH')], key=natural_psp_key)
     print(f"found {len(sch_files)} instances in {folder}")
 
     results = []
     num_valid = 0
     total_makespan = 0
 
-    for filename in sch_files:
+    def render_progress(done, total, label):
+        width = 28
+        filled = int(width * done / max(1, total))
+        bar = "#" * filled + "-" * (width - filled)
+        pct = int(100 * done / max(1, total))
+        print(f"\r[{bar}] {pct:3d}% ({done}/{total}) {label}", end="", file=sys.stderr, flush=True)
+
+    total = len(sch_files)
+
+    for idx, filename in enumerate(sch_files, start=1):
         filepath = os.path.join(folder, filename)
 
         start = time.time()
@@ -144,12 +162,16 @@ def test_all_instances(folder, solver_fn):
                 status = f"INVALID ({len(violations)} violations)"
 
             results.append((filename, makespan, elapsed, status))
-            print(f"  {filename}: makespan={makespan}, time={elapsed:.2f}s, {status}")
+            print(f"  [{idx}/{total}] {filename}: makespan={makespan}, time={elapsed:.2f}s, {status}")
+            render_progress(idx, total, filename)
 
         except Exception as e:
             elapsed = time.time() - start
             results.append((filename, -1, elapsed, f"ERROR: {e}"))
-            print(f"  {filename}: ERROR — {e}")
+            print(f"  [{idx}/{total}] {filename}: ERROR — {e}")
+            render_progress(idx, total, filename)
+
+    print(file=sys.stderr)
 
     print(f"\n{'='*50}")
     print(f"valid: {num_valid}/{len(sch_files)}")
