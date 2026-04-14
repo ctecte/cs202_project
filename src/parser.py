@@ -82,15 +82,6 @@ def parse(filepath):
     for c in cap_tokens:
         capacities.append(int(c))
 
-    # Fail fast for instances that are impossible under this renewable model.
-    for act_id in range(1, n + 1):
-        reqs = activities[act_id].resources
-        for r in range(k):
-            if reqs[r] > capacities[r]:
-                raise ValueError(
-                    f"Activity {act_id} requires R{r + 1}={reqs[r]} > cap {capacities[r]}"
-                )
-
     return Project(
         n=n,
         k=k,

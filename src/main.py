@@ -26,6 +26,7 @@ from scheduler import (
     order_by_id,
     order_by_lft,
     topological_sequential_schedule,
+    check_feasibility,
 )
 from optimizer import genetic_algorithm, alns_optimize
 from validator import validate, compute_makespan, test_all_instances
@@ -109,10 +110,14 @@ def _worker_optimize(task):
 
 def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
     """
-    full pipeline: parse -> optimize -> return best schedule.
+    full pipeline: parse -> check feasibility -> optimize -> return best schedule.
     this is what gets called for each instance.
     """
     project = parse(filepath)
+
+    # Bail out immediately if any activity exceeds resource capacity.
+    if not check_feasibility(project):
+        return project, None
 
     if approach == "topo_seq":
         return project, topological_sequential_schedule(project)
@@ -230,19 +235,24 @@ def main():
         project, schedule = solve(filepath, workers=workers, time_budget=time_budget, approach=approach)
         elapsed = time.time() - start
 
-        # validate
-        valid, violations = validate(project, schedule)
+        if schedule is None:
+            print("-1")
+            print(f"\ninfeasible (activity resource demand exceeds capacity)", file=sys.stderr)
+            print(f"time: {elapsed:.2f}s", file=sys.stderr)
+        else:
+            # validate
+            valid, violations = validate(project, schedule)
 
-        # print results
-        print_schedule(project, schedule)
-        print(f"\nvalid: {valid}")
-        if not valid:
-            for v in violations[:10]:  # only show first 10
-                print(f"  {v}")
-        print(f"workers: {workers}")
-        print(f"time_budget: {time_budget:.2f}s")
-        print(f"approach: {approach} ({APPROACH_LABELS.get(approach, approach)})")
-        print(f"time: {elapsed:.2f}s")
+            # print results
+            print_schedule(project, schedule)
+            print(f"\nvalid: {valid}")
+            if not valid:
+                for v in violations[:10]:  # only show first 10
+                    print(f"  {v}")
+            print(f"workers: {workers}")
+            print(f"time_budget: {time_budget:.2f}s")
+            print(f"approach: {approach} ({APPROACH_LABELS.get(approach, approach)})")
+            print(f"time: {elapsed:.2f}s")
 
 
 if __name__ == "__main__":

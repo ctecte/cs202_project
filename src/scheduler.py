@@ -95,6 +95,23 @@ def find_earliest_start(project, activity_id, schedule, tracker, max_horizon=Non
     return t
 
 
+def check_feasibility(project):
+    """
+    Check if the instance is feasible — no single activity demands more
+    of any resource than the total capacity. If this fails, no valid
+    schedule can exist regardless of ordering.
+
+    Call this once upfront to avoid wasting the full time budget on
+    provably infeasible instances.
+    """
+    for act_id in project.real_ids():
+        act = project.activities[act_id]
+        for r in range(project.k):
+            if act.resources[r] > project.capacities[r]:
+                return False
+    return True
+
+
 def ssgs(project, activity_list):
     """
     Serial Schedule Generation Scheme.
@@ -115,15 +132,6 @@ def ssgs(project, activity_list):
     tracker = ResourceTracker(project.capacities)
     schedule = {}
     max_horizon = sum(project.activities[i].duration for i in project.all_ids())
-
-    # Fail fast on impossible renewable demand to avoid infinite scans.
-    for act_id in project.real_ids():
-        act = project.activities[act_id]
-        for r in range(project.k):
-            if act.resources[r] > project.capacities[r]:
-                raise ValueError(
-                    f"Activity {act_id} requires R{r + 1}={act.resources[r]} > cap {project.capacities[r]}"
-                )
 
     # schedule dummy start at time 0
     schedule[0] = 0

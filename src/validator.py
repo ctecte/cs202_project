@@ -151,6 +151,12 @@ def test_all_instances(folder, solver_fn):
             project, schedule = solver_fn(filepath)
             elapsed = time.time() - start
 
+            if schedule is None:
+                results.append((filename, -1, elapsed, "INFEASIBLE"))
+                print(f"  [{idx}/{total}] {filename}: INFEASIBLE, time={elapsed:.2f}s")
+                render_progress(idx, total, filename)
+                continue
+
             valid, violations = validate(project, schedule)
             makespan = compute_makespan(project, schedule)
 
