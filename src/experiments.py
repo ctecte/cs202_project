@@ -24,13 +24,14 @@ from main import solve
 from validator import validate, compute_makespan
 
 
-APPROACHES = ("topo_seq", "id_ssgs", "lft_ssgs", "ga")
+APPROACHES = ("topo_seq", "id_ssgs", "lft_ssgs", "ga", "alns")
 
 APPROACH_LABELS = {
     "topo_seq": "Topological Sequential Baseline (precedence-only)",
     "id_ssgs": "Serial Schedule Generation Scheme (Priority by Activity ID)",
     "lft_ssgs": "Serial Schedule Generation Scheme (Latest Finish Time priority)",
     "ga": "Genetic Algorithm + SSGS Decoder",
+    "alns": "Adaptive Large Neighborhood Search + SSGS Decoder",
 }
 
 APPROACH_ALIASES = {
@@ -43,6 +44,8 @@ APPROACH_ALIASES = {
     "ssgs_lft": "lft_ssgs",
     "genetic": "ga",
     "genetic_algorithm": "ga",
+    "adaptive_large_neighborhood_search": "alns",
+    "alns_ssgs": "alns",
 }
 
 
@@ -268,6 +271,7 @@ def write_markdown_summary(path, aggregate, machine_specs, args):
     lines.append("- `id_ssgs` (SSGS with Activity-ID Priority): Earliest feasible scheduling with simple ID tie-breaking. Rationale: deterministic resource-feasible baseline.")
     lines.append("- `lft_ssgs` (SSGS with Latest Finish Time Priority): Earliest feasible scheduling guided by urgency (latest finish time). Rationale: stronger heuristic with low overhead.")
     lines.append("- `ga` (Genetic Algorithm + SSGS Decoder): Metaheuristic search over activity orders, decoded by SSGS. Rationale: can improve quality at higher compute cost.")
+    lines.append("- `alns` (Adaptive Large Neighborhood Search + SSGS Decoder): destroy-repair metaheuristic with adaptive operator weights. Rationale: stronger intensification/diversification balance.")
     lines.append("")
     lines.append("Interpretation tip: lower makespan is better quality; runtime shows efficiency trade-offs.")
 

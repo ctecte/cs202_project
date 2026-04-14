@@ -27,7 +27,7 @@ from scheduler import (
     order_by_lft,
     topological_sequential_schedule,
 )
-from optimizer import genetic_algorithm
+from optimizer import genetic_algorithm, alns_optimize
 from validator import validate, compute_makespan, test_all_instances
 
 
@@ -39,6 +39,7 @@ APPROACH_LABELS = {
     "id_ssgs": "SSGS with Activity-ID Priority",
     "lft_ssgs": "SSGS with Latest Finish Time Priority",
     "ga": "Genetic Algorithm + SSGS Decoder",
+    "alns": "Adaptive Large Neighborhood Search + SSGS Decoder",
 }
 
 
@@ -86,17 +87,22 @@ def _extract_approach(argv):
         "ssgs_lft": "lft_ssgs",
         "genetic": "ga",
         "genetic_algorithm": "ga",
+        "adaptive_large_neighborhood_search": "alns",
+        "alns_ssgs": "alns",
     }
     return aliases.get(raw, raw)
 
 
 def _worker_optimize(task):
     """Independent portfolio worker with its own random seed."""
-    filepath, seed, time_budget = task
+    filepath, seed, time_budget, approach = task
     random.seed(seed)
 
     project = parse(filepath)
-    schedule = genetic_algorithm(project, time_limit=time_budget)
+    if approach == "alns":
+        schedule = alns_optimize(project, time_limit=time_budget)
+    else:
+        schedule = genetic_algorithm(project, time_limit=time_budget)
     makespan = get_makespan(project, schedule)
     return makespan, schedule
 
@@ -117,7 +123,7 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
     if approach == "lft_ssgs":
         return project, ssgs(project, order_by_lft(project))
 
-    # Default = GA portfolio with LFT baseline safety net.
+    # Metaheuristics portfolio with LFT baseline safety net.
     baseline_order = order_by_lft(project)
     best_schedule = ssgs(project, baseline_order)
     best_makespan = get_makespan(project, best_schedule)
@@ -125,7 +131,10 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
     # step 2: try to improve with the optimizer
     if workers <= 1:
         try:
-            optimized = genetic_algorithm(project, time_limit=time_budget)
+            if approach == "alns":
+                optimized = alns_optimize(project, time_limit=time_budget)
+            else:
+                optimized = genetic_algorithm(project, time_limit=time_budget)
             if optimized:
                 opt_makespan = get_makespan(project, optimized)
                 if opt_makespan < best_makespan:
@@ -137,7 +146,7 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
     else:
         # Portfolio restarts: multiple random seeds in parallel, keep the best result.
         base_seed = int(time.time() * 1000) % 1_000_000_007
-        tasks = [(filepath, base_seed + i * 9973, time_budget) for i in range(workers)]
+        tasks = [(filepath, base_seed + i * 9973, time_budget, approach) for i in range(workers)]
         try:
             ctx = mp.get_context("spawn")
             with ctx.Pool(processes=workers) as pool:
@@ -152,7 +161,10 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
             )
             # Fallback if multiprocessing fails in current environment.
             try:
-                optimized = genetic_algorithm(project, time_limit=time_budget)
+                if approach == "alns":
+                    optimized = alns_optimize(project, time_limit=time_budget)
+                else:
+                    optimized = genetic_algorithm(project, time_limit=time_budget)
                 if optimized:
                     opt_makespan = get_makespan(project, optimized)
                     if opt_makespan < best_makespan:
@@ -192,7 +204,7 @@ def main():
         print("       python main.py --batch <folder>")
         print("optional: --workers <num_workers>")
         print("optional: --time-budget <seconds_per_instance>")
-        print("optional: --approach <ga|lft_ssgs|id_ssgs|topo_seq>")
+        print("optional: --approach <ga|alns|lft_ssgs|id_ssgs|topo_seq>")
         sys.exit(1)
 
     workers = _extract_workers(sys.argv)

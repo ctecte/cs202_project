@@ -25,6 +25,7 @@ ALGO_MENU = [
     ("id_ssgs", "Serial Schedule Generation Scheme (Priority by Activity ID)"),
     ("lft_ssgs", "Serial Schedule Generation Scheme (Latest Finish Time priority)"),
     ("ga", "Genetic Algorithm + SSGS Decoder"),
+    ("alns", "Adaptive Large Neighborhood Search + SSGS Decoder"),
 ]
 
 
