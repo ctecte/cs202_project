@@ -268,6 +268,31 @@ def order_by_successors(project):
     return precedence_feasible_order(project, priority_key=lambda aid: -total_successors(aid))
 
 
+def order_by_grpw(project):
+    """
+    greatest rank positional weight — own duration + total duration of all
+    transitive successors. higher weight = scheduled first.
+    """
+    memo = {}
+
+    def rpw(aid):
+        if aid in memo:
+            return memo[aid]
+        total = 0
+        for s in project.successors[aid]:
+            total += project.activities[s].duration + rpw(s)
+        memo[aid] = total
+        return total
+
+    for aid in project.all_ids():
+        rpw(aid)
+
+    return precedence_feasible_order(
+        project,
+        priority_key=lambda aid: -(project.activities[aid].duration + memo.get(aid, 0)),
+    )
+
+
 def order_by_lft(project):
     """
     latest finish time (LFT) rule — schedule activities with earlier

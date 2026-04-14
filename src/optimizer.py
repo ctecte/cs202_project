@@ -19,7 +19,7 @@ two approaches provided below (pick one or try both):
 import random
 import time
 from models import Project
-from scheduler import ssgs, get_makespan, order_by_lft
+from scheduler import ssgs, get_makespan, order_by_lft, order_by_successors, order_by_grpw
 
 
 # ========================================
@@ -404,10 +404,14 @@ def alns_optimize(project, time_limit=25):
     start = time.time()
     deadline = start + time_limit
 
-    # Initial seed: best of deterministic LFT and a few random topological orders.
+    # Initial seed: deterministic priority rules + random topological orders.
     lft_values = _compute_lft_values(project)
-    seeds = [order_by_lft(project)]
-    for _ in range(4):
+    seeds = [
+      order_by_lft(project),
+      order_by_successors(project),
+      order_by_grpw(project),
+    ]
+    for _ in range(2):
       seeds.append(random_activity_list(project))
 
     best_order = None
@@ -666,13 +670,17 @@ def genetic_algorithm(project, time_limit=25):
     # --- STEP 1: generate initial population ---
     population = [random_activity_list(project) for _ in range(pop_size)]
 
-    # Seed one deterministic strong baseline into the population.
-    try:
-      baseline = order_by_lft(project)
-      if is_precedence_feasible(project, baseline):
-        population[0] = baseline
-    except Exception:
-      pass
+    # Seed deterministic priority-rule baselines into the population.
+    priority_seeds = [order_by_lft, order_by_successors, order_by_grpw]
+    for i, rule_fn in enumerate(priority_seeds):
+      if i >= pop_size:
+        break
+      try:
+        seed = rule_fn(project)
+        if is_precedence_feasible(project, seed):
+          population[i] = seed
+      except Exception:
+        pass
 
     # --- STEP 2: evaluate initial population ---
     fitnesses = []
