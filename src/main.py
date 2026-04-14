@@ -236,23 +236,23 @@ def main():
         elapsed = time.time() - start
 
         if schedule is None:
+            # Submission format: print -1 for infeasible instances
             print("-1")
-            print(f"\ninfeasible (activity resource demand exceeds capacity)", file=sys.stderr)
+            print(f"infeasible (activity resource demand exceeds capacity)", file=sys.stderr)
             print(f"time: {elapsed:.2f}s", file=sys.stderr)
         else:
-            # validate
-            valid, violations = validate(project, schedule)
+            # Submission format: comma-separated start times for activities 1..N
+            start_times = [str(schedule[i]) for i in range(1, project.n + 1)]
+            print(", ".join(start_times))
 
-            # print results
-            print_schedule(project, schedule)
-            print(f"\nvalid: {valid}")
+            # Everything else goes to stderr so it doesn't interfere with grading
+            valid, violations = validate(project, schedule)
+            makespan = compute_makespan(project, schedule)
+            print(f"makespan={makespan} valid={valid} time={elapsed:.2f}s", file=sys.stderr)
+            print(f"workers={workers} approach={approach} ({APPROACH_LABELS.get(approach, approach)})", file=sys.stderr)
             if not valid:
-                for v in violations[:10]:  # only show first 10
-                    print(f"  {v}")
-            print(f"workers: {workers}")
-            print(f"time_budget: {time_budget:.2f}s")
-            print(f"approach: {approach} ({APPROACH_LABELS.get(approach, approach)})")
-            print(f"time: {elapsed:.2f}s")
+                for v in violations[:10]:
+                    print(f"  {v}", file=sys.stderr)
 
 
 if __name__ == "__main__":
