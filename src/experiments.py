@@ -119,6 +119,24 @@ def run_experiment(folder, approach, time_budget, workers, limit=None):
         try:
             project, schedule = solve(path, workers=workers, time_budget=time_budget, approach=approach)
             elapsed = time.time() - t0
+            if schedule is None:
+                rows.append(
+                    {
+                        "instance": name,
+                        "folder": folder,
+                        "approach": approach,
+                        "approach_name": approach_name,
+                        "time_budget": time_budget,
+                        "workers": workers,
+                        "runtime_sec": round(elapsed, 4),
+                        "makespan": -1,
+                        "valid": False,
+                        "status": "INFEASIBLE",
+                        "error": "activity resource demand exceeds capacity",
+                    }
+                )
+                continue
+
             valid, violations = validate(project, schedule)
             makespan = compute_makespan(project, schedule)
             rows.append(
@@ -166,6 +184,9 @@ def aggregate_rows(rows):
     for (folder, approach), vals in grouped.items():
         approach_name = APPROACH_LABELS.get(approach, approach)
         valid = [v for v in vals if v["valid"]]
+        infeasible = [v for v in vals if v.get("status") == "INFEASIBLE"]
+        errors = [v for v in vals if v.get("status") == "ERROR"]
+        invalid = [v for v in vals if not v["valid"]]
         avg_runtime = sum(v["runtime_sec"] for v in vals) / max(1, len(vals))
         avg_makespan = (
             sum(v["makespan"] for v in valid) / len(valid)
@@ -179,7 +200,9 @@ def aggregate_rows(rows):
                 "approach_name": approach_name,
                 "instances": len(vals),
                 "valid_count": len(valid),
-                "invalid_count": len(vals) - len(valid),
+                "invalid_count": len(invalid),
+                "infeasible_count": len(infeasible),
+                "error_count": len(errors),
                 "avg_runtime_sec": round(avg_runtime, 4),
                 "avg_makespan_valid": round(avg_makespan, 4) if avg_makespan is not None else "NA",
             }
@@ -247,6 +270,8 @@ def write_markdown_summary(path, aggregate, machine_specs, args):
         "Instances",
         "Valid",
         "Invalid",
+        "Infeasible",
+        "Errors",
         "Avg Runtime (s)",
         "Avg Makespan (valid only)",
     ]
@@ -258,12 +283,14 @@ def write_markdown_summary(path, aggregate, machine_specs, args):
             row["instances"],
             row["valid_count"],
             row["invalid_count"],
+            row["infeasible_count"],
+            row["error_count"],
             row["avg_runtime_sec"],
             row["avg_makespan_valid"],
         ]
         for row in aggregate
     ]
-    lines.extend(render_markdown_table(agg_headers, agg_rows, right_align_cols={3, 4, 5, 6, 7}))
+    lines.extend(render_markdown_table(agg_headers, agg_rows, right_align_cols={3, 4, 5, 6, 7, 8, 9}))
     lines.append("")
     lines.append("## Notes")
     lines.append("")
@@ -357,6 +384,8 @@ def main():
         "instances",
         "valid_count",
         "invalid_count",
+        "infeasible_count",
+        "error_count",
         "avg_runtime_sec",
         "avg_makespan_valid",
     ]

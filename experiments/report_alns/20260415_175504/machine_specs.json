@@ -1,0 +1,12 @@
+{
+  "platform": "Windows-10-10.0.26200-SP0",
+  "system": "Windows",
+  "release": "10",
+  "version": "10.0.26200",
+  "machine": "AMD64",
+  "processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
+  "python_version": "3.10.10",
+  "cpu_count_logical": 12,
+  "ram_bytes": 17012723712,
+  "ram_gb": 15.84
+}

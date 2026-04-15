@@ -1,0 +1,3 @@
+folder,run_id,approach,approach_name,workers,instances,valid_count,invalid_count,infeasible_count,error_count,avg_runtime_sec,avg_makespan_valid
+sm_j10,alns_run1_w1,alns,Adaptive Large Neighborhood Search + SSGS Decoder,1,270,253,17,17,0,26.244,36.6008
+sm_j20,alns_run1_w1,alns,Adaptive Large Neighborhood Search + SSGS Decoder,1,270,266,4,4,0,27.6964,57.609

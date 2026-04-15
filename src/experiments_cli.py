@@ -131,6 +131,9 @@ def aggregate(rows):
     out = []
     for (folder, run_id, approach, approach_name, workers), vals in grouped.items():
         valid_rows = [v for v in vals if v["valid"]]
+        infeasible_rows = [v for v in vals if v.get("status") == "INFEASIBLE"]
+        error_rows = [v for v in vals if v.get("status") == "ERROR"]
+        invalid_rows = [v for v in vals if not v["valid"]]
         avg_runtime = sum(v["runtime_sec"] for v in vals) / max(1, len(vals))
         avg_makespan = (
             sum(v["makespan"] for v in valid_rows) / len(valid_rows)
@@ -146,7 +149,9 @@ def aggregate(rows):
                 "workers": workers,
                 "instances": len(vals),
                 "valid_count": len(valid_rows),
-                "invalid_count": len(vals) - len(valid_rows),
+                "invalid_count": len(invalid_rows),
+                "infeasible_count": len(infeasible_rows),
+                "error_count": len(error_rows),
                 "avg_runtime_sec": round(avg_runtime, 4),
                 "avg_makespan_valid": round(avg_makespan, 4) if avg_makespan is not None else "NA",
             }
@@ -182,6 +187,8 @@ def write_summary(path, config, aggregate_rows):
         "Instances",
         "Valid",
         "Invalid",
+        "Infeasible",
+        "Errors",
         "Avg Runtime (s)",
         "Avg Makespan (valid only)",
     ]
@@ -194,12 +201,14 @@ def write_summary(path, config, aggregate_rows):
             row["instances"],
             row["valid_count"],
             row["invalid_count"],
+            row["infeasible_count"],
+            row["error_count"],
             row["avg_runtime_sec"],
             row["avg_makespan_valid"],
         ]
         for row in aggregate_rows
     ]
-    lines.extend(exp.render_markdown_table(agg_headers, agg_rows, right_align_cols={3, 4, 5, 6, 7, 8}))
+    lines.extend(exp.render_markdown_table(agg_headers, agg_rows, right_align_cols={3, 4, 5, 6, 7, 8, 9, 10}))
 
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
@@ -286,6 +295,8 @@ def main():
         "instances",
         "valid_count",
         "invalid_count",
+        "infeasible_count",
+        "error_count",
         "avg_runtime_sec",
         "avg_makespan_valid",
     ]

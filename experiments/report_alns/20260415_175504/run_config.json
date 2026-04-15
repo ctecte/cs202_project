@@ -1,0 +1,16 @@
+{
+  "folders": [
+    "sm_j10",
+    "sm_j20"
+  ],
+  "time_budget": 28.0,
+  "limit": 0,
+  "plan": [
+    {
+      "run_id": "alns_run1_w4",
+      "approach": "alns",
+      "approach_name": "Adaptive Large Neighborhood Search + SSGS Decoder",
+      "workers": 4
+    }
+  ]
+}
