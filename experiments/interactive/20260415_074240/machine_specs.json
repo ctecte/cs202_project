@@ -1,0 +1,10 @@
+{
+  "platform": "Linux-6.17.2-2-pve-x86_64-with-glibc2.41",
+  "system": "Linux",
+  "release": "6.17.2-2-pve",
+  "version": "#1 SMP PREEMPT_DYNAMIC PMX 6.17.2-2 (2025-11-26T12:33Z)",
+  "machine": "x86_64",
+  "processor": "x86_64",
+  "python_version": "3.13.3",
+  "cpu_count_logical": 2
+}
