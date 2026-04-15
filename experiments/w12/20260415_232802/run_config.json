@@ -1,0 +1,21 @@
+{
+  "folders": [
+    "sm_j20"
+  ],
+  "time_budget": 28.0,
+  "limit": 0,
+  "plan": [
+    {
+      "run_id": "ga_run1_w12",
+      "approach": "ga",
+      "approach_name": "Genetic Algorithm + SSGS Decoder",
+      "workers": 12
+    },
+    {
+      "run_id": "alns_run1_w12",
+      "approach": "alns",
+      "approach_name": "Adaptive Large Neighborhood Search + SSGS Decoder",
+      "workers": 12
+    }
+  ]
+}
