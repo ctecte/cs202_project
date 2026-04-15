@@ -1,10 +1,4 @@
-"""
-shared data stuff that everyone will use
-just import from here can alr
-"""
-
 from dataclasses import dataclass, field
-
 
 @dataclass
 class Activity:
@@ -15,17 +9,17 @@ class Activity:
 
 @dataclass
 class Project:
-    n: int              # num of real activities (not counting the dummy start/end)
+    n: int              # num of real activities
     k: int              # num of resource types
-    activities: dict    # activity_id -> Activity obj
-    successors: dict    # activity_id -> list of successor_ids
-    predecessors: dict  # activity_id -> list of predecessor_ids
+    activities: dict    # activity_id to obj mapping
+    successors: dict    # activity successors successor_id
+    predecessors: dict  # activity_id dependencies required predecessor_ids
     capacities: list    # max units for each resource type
 
+    # 0 to n+1 (includes dummy start and end)
     def all_ids(self):
-        """0 to n+1 (includes dummy start and end)"""
         return list(range(self.n + 2))
 
+    # 1 to n (no dummies)
     def real_ids(self):
-        """1 to n only (no dummies)"""
         return list(range(1, self.n + 1))

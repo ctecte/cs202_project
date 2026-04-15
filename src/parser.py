@@ -43,7 +43,7 @@ def parse(filepath):
         successors[activity_id] = succs
 
         # predecessors
-        # if activity 0 -> 3, then 3 has depencency 0
+        # if activity 0 -> 3, then 3 has dependency 0
         for s in succs:
             predecessors[s].append(activity_id)
 
