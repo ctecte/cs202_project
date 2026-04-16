@@ -1,42 +1,12 @@
-"""
-PERSON 3: Optimizer (Genetic Algorithm / Simulated Annealing)
-==============================================================
-this is where the magic happens — we use metaheuristics to search
-for a good activity ordering that gives us the best makespan.
-
-key idea:
-  - a "solution" is an activity list (a permutation of [1..n])
-    that respects precedence
-  - we feed this list into SSGS (scheduler.py) to get a schedule
-  - the makespan of that schedule = our fitness score
-  - we try to find the activity list that gives the lowest makespan
-
-two approaches provided below (pick one or try both):
-  1. Genetic Algorithm (GA)
-  2. Simulated Annealing (SA)
-"""
-
 import random
 import time
 from models import Project
 from scheduler import ssgs, get_makespan, order_by_lft, order_by_successors, order_by_grpw
 
 
-# ========================================
-# HELPER: generating valid activity lists
-# ========================================
-
+# find random order that follows the arrows. 
+# basically pick things that have all their parents done already.
 def random_activity_list(project):
-    """
-    generate a random precedence-feasible activity list.
-
-    approach: topological sort with random tie-breaking.
-      1. find all activities whose predecessors are all "placed"
-      2. randomly pick one, add it to the list
-      3. repeat until all activities are placed
-
-    this always produces a valid ordering — predecessors come before successors.
-    """
     placed = {0}
     activity_list = []
 
@@ -50,7 +20,7 @@ def random_activity_list(project):
           eligible.append(act_id)
 
       if not eligible:
-        # defensive fallback for malformed precedence data
+        # fallback just in case
         remaining = [i for i in project.real_ids() if i not in placed]
         eligible = remaining
 
@@ -61,12 +31,8 @@ def random_activity_list(project):
     return activity_list
 
 
+# check if the order follows the dependencies.
 def is_precedence_feasible(project, activity_list):
-    """
-    check if an activity list respects precedence —
-    for every edge i->j, i must appear before j in the list.
-    useful for sanity checking after crossover/mutation.
-    """
     position = {act: idx for idx, act in enumerate(activity_list)}
     for act in activity_list:
       for succ_id in project.successors[act]:
@@ -77,8 +43,8 @@ def is_precedence_feasible(project, activity_list):
     return True
 
 
+# get latest-finish-times ignoring resources to guide the search.
 def _compute_lft_values(project):
-    """Compute latest-finish-time values (ignoring resources) for priority guidance."""
     end_id = project.n + 1
     est = {aid: 0 for aid in project.all_ids()}
 
@@ -105,13 +71,13 @@ def _compute_lft_values(project):
 
 
 def _evaluate_order(project, activity_list):
-    """Decode an activity list with SSGS and return (schedule, makespan)."""
+    # decode activity list with SSGS and get makespan
     sched = ssgs(project, activity_list)
     return sched, get_makespan(project, sched)
 
 
 def _weighted_choice(items, weights):
-    """Roulette-wheel selection over named operators."""
+    # pick an operator based on its score
     total = sum(max(0.0001, weights[x]) for x in items)
     roll = random.random() * total
     run = 0.0
@@ -123,7 +89,7 @@ def _weighted_choice(items, weights):
 
 
 def _precedence_ok_at_position(project, partial_order, act_id, pos):
-    """Check if inserting act_id at pos keeps precedence feasible in partial_order."""
+    # check if act_id can be at pos without breaking dependency
     idx = {aid: i for i, aid in enumerate(partial_order)}
 
     for pred in project.predecessors[act_id]:
@@ -142,7 +108,7 @@ def _precedence_ok_at_position(project, partial_order, act_id, pos):
 
 
 def _feasible_positions(project, partial_order, act_id):
-    """All insertion indices that preserve precedence relative to already-placed tasks."""
+    # find all valid spots to insert act_id
     positions = []
     for pos in range(len(partial_order) + 1):
       if _precedence_ok_at_position(project, partial_order, act_id, pos):
@@ -151,7 +117,7 @@ def _feasible_positions(project, partial_order, act_id):
 
 
 def _complete_order_from_partial(project, fixed_order, lft_values):
-    """Complete a precedence-feasible full order while preserving fixed_order subsequence."""
+    # fill in the missing tasks while keeping fixed_order as a subsequence
     fixed = list(fixed_order)
     fixed_set = set(fixed)
     next_fixed = 0
@@ -182,6 +148,7 @@ def _complete_order_from_partial(project, fixed_order, lft_values):
           pick = fixed_target
           next_fixed += 1
         elif non_fixed_eligible:
+          # prioritize urgent tasks by LFT
           pick = min(
             non_fixed_eligible,
             key=lambda aid: (lft_values.get(aid, 0), project.activities[aid].duration, aid),
@@ -200,7 +167,7 @@ def _complete_order_from_partial(project, fixed_order, lft_values):
 
 
 def _topological_repair(project, maybe_invalid):
-    """Repair an invalid order by reconstructing a precedence-feasible topological order."""
+    # fix broken order by re-sorting based on preferred rank
     preferred_rank = {aid: i for i, aid in enumerate(maybe_invalid)}
     placed = {0}
     remaining = set(project.real_ids())
@@ -218,6 +185,7 @@ def _topological_repair(project, maybe_invalid):
     return out
 
 
+# ALNS Destroy Methods
 def _destroy_random(order, remove_count):
     removed = set(random.sample(order, min(remove_count, len(order))))
     kept = [aid for aid in order if aid not in removed]
@@ -225,7 +193,7 @@ def _destroy_random(order, remove_count):
 
 
 def _destroy_critical(order, remove_count, schedule, project):
-    """Remove activities finishing late (near critical chain)."""
+    # remove tasks that finish late (bottlenecks)
     scored = []
     for aid in order:
       start = schedule.get(aid, 0)
@@ -239,7 +207,7 @@ def _destroy_critical(order, remove_count, schedule, project):
 
 
 def _destroy_resource_heavy(order, remove_count, project):
-    """Remove resource-heavy activities to re-open congested regions."""
+    # remove tasks that eat a lot of resources relative to capacity
     scored = []
     for aid in order:
       act = project.activities[aid]
@@ -262,8 +230,9 @@ def _projected_cost_with_completion(project, partial_order, lft_values):
     return ms, full
 
 
+# ALNS Repair Methods
 def _repair_greedy_best(project, base_order, removed, lft_values):
-    """Insert each removed activity at best currently feasible index by projected makespan."""
+    # insert each removed task at its best possible spot
     partial = base_order[:]
     remaining = removed[:]
     random.shuffle(remaining)
@@ -292,7 +261,7 @@ def _repair_greedy_best(project, base_order, removed, lft_values):
 
 
 def _repair_regret2(project, base_order, removed, lft_values):
-    """Regret-2 insertion: prioritize activities with biggest 2nd-best minus best insertion cost."""
+    # regret-2: prioritize tasks with biggest cost difference between best and 2nd-best spot
     partial = base_order[:]
     remaining = set(removed)
 
@@ -336,7 +305,7 @@ def _repair_regret2(project, base_order, removed, lft_values):
 
 
 def _repair_lft_guided(project, base_order, removed, lft_values):
-    """Insert removed activities by urgency (LFT ascending) at earliest precedence-feasible index."""
+    # insert removed tasks by urgency (LFT) at their earliest valid spot
     partial = base_order[:]
     for aid in sorted(removed, key=lambda x: (lft_values.get(x, 0), x)):
       positions = _feasible_positions(project, partial, aid)
@@ -350,7 +319,7 @@ def _repair_lft_guided(project, base_order, removed, lft_values):
 
 
 def _local_search_improve(project, order, best_ms, deadline, tries=120):
-    """Fast first-improvement local search using insertion and adjacent swap moves."""
+    # simple swaps and shifts around the best solution
     current = order[:]
     current_best_ms = best_ms
 
@@ -391,20 +360,11 @@ def _local_search_improve(project, order, best_ms, deadline, tries=120):
     return current, current_best_ms
 
 
+# Adaptive Large Neighborhood Search
 def alns_optimize(project, time_limit=25):
-    """
-    Adaptive Large Neighborhood Search (ALNS) with SSGS decoding.
-
-    This is a strong single-worker optimizer for RCPSP that repeatedly:
-      1) destroys part of the activity order,
-      2) repairs it with one of several insertion heuristics,
-      3) accepts/rejects using simulated annealing,
-      4) adapts operator probabilities by observed gains.
-    """
     start = time.time()
     deadline = start + time_limit
 
-    # Initial seed: deterministic priority rules + random topological orders.
     lft_values = _compute_lft_values(project)
     seeds = [
       order_by_lft(project),
@@ -511,7 +471,7 @@ def alns_optimize(project, time_limit=25):
       destroy_scores[d_name] += reward
       repair_scores[r_name] += reward
 
-      # Periodic intensification around best solution.
+      # Intensification periodically
       if iteration % 40 == 0 and time.time() < deadline:
         ls_deadline = min(deadline, time.time() + min(0.20, 0.10 * time_limit))
         improved_order, improved_ms = _local_search_improve(project, best_order, best_ms, ls_deadline)
@@ -522,7 +482,7 @@ def alns_optimize(project, time_limit=25):
           current_ms = best_ms
           current_schedule = best_schedule
 
-      # Update adaptive weights every segment.
+      # update operator probabilities
       if iteration % segment_len == 0:
         reaction = 0.35
         for name in destroy_ops:
@@ -546,15 +506,7 @@ def alns_optimize(project, time_limit=25):
     return best_schedule
 
 
-# ========================================
-# GENETIC ALGORITHM
-# ========================================
-
 def tournament_select(population, fitnesses, tournament_size=3):
-    """
-    pick a few random individuals, return the best one.
-    standard tournament selection — simple and works well.
-    """
     if not population:
       return None
     t = min(tournament_size, len(population))
@@ -564,22 +516,7 @@ def tournament_select(population, fitnesses, tournament_size=3):
 
 
 def crossover(parent1, parent2, project):
-    """
-    precedence-preserving crossover.
-
-    one way to do it:
-      1. randomly pick ~half the positions from parent1
-      2. keep those activities in the same positions
-      3. fill in the remaining activities in the order they appear in parent2
-      4. check that the result is still precedence-feasible
-
-    or simpler: two-point crossover then repair if needed.
-
-    TODO: implement — this is the trickiest part of the GA.
-    make sure the result is always a valid precedence-feasible permutation.
-    """
-    # Precedence-preserving merge: repeatedly pick one eligible activity
-    # from either parent (in parent order), defaulting to random eligible.
+    # merge parents while keeping precedence valid
     placed = {0}
     remaining = set(project.real_ids())
     child = []
@@ -590,7 +527,6 @@ def crossover(parent1, parent2, project):
         if all(pred in placed for pred in project.predecessors[aid])
       ]
       if not eligible:
-        # malformed input fallback
         eligible = list(remaining)
 
       from_p1 = next((aid for aid in parent1 if aid in eligible), None)
@@ -613,14 +549,7 @@ def crossover(parent1, parent2, project):
 
 
 def mutate(activity_list, project, mutation_rate=0.1):
-    """
-    slightly modify the activity list.
-
-    simple approach: with some probability, swap two adjacent activities
-    (only if the swap doesn't break precedence).
-
-    TODO: implement
-    """
+    # swap neighbors if possible
     mutated = activity_list[:]
     for i in range(len(mutated) - 1):
       if random.random() < mutation_rate:
@@ -630,35 +559,14 @@ def mutate(activity_list, project, mutation_rate=0.1):
     return mutated
 
 
+# Genetic Algorithm
 def genetic_algorithm(project, time_limit=25):
-    """
-    main GA loop.
-
-    params:
-      project:    the parsed Project
-      time_limit: how many seconds we have (leave some buffer from the 30s budget)
-
-    overview:
-      1. generate initial population of random activity lists
-      2. evaluate each one with SSGS -> get makespan
-      3. loop until time runs out:
-         a. select parents
-         b. crossover -> child
-         c. mutate child
-         d. evaluate child
-         e. if child is better than worst in population, replace it
-      4. return the best schedule found
-
-    TODO: implement the full loop. suggested population size: 50-100.
-    """
     start_time = time.time()
     pop_size = 40
     best_schedule = None
     best_makespan = float('inf')
     generation = 0
 
-    # Stop early when search is flat: helpful for larger time budgets where
-    # the population converges quickly and extra time brings no gain.
     min_runtime_before_stall_check = min(1.0, max(0.2, 0.10 * time_limit))
     stall_seconds = min(8.0, max(1.0, 0.25 * time_limit))
     no_improve_generations = 0
@@ -667,10 +575,9 @@ def genetic_algorithm(project, time_limit=25):
     restart_count = 0
     max_restarts = max(1, int(time_limit // 6))
 
-    # --- STEP 1: generate initial population ---
     population = [random_activity_list(project) for _ in range(pop_size)]
 
-    # Seed deterministic priority-rule baselines into the population.
+    # seed with heuristic baselines
     priority_seeds = [order_by_lft, order_by_successors, order_by_grpw]
     for i, rule_fn in enumerate(priority_seeds):
       if i >= pop_size:
@@ -682,7 +589,6 @@ def genetic_algorithm(project, time_limit=25):
       except Exception:
         pass
 
-    # --- STEP 2: evaluate initial population ---
     fitnesses = []
     for individual in population:
       try:
@@ -698,7 +604,6 @@ def genetic_algorithm(project, time_limit=25):
         last_improvement_time = time.time()
         no_improve_generations = 0
 
-    # --- STEP 3: main loop ---
     while time.time() - start_time < time_limit:
       parent1 = tournament_select(population, fitnesses)
       parent2 = tournament_select(population, fitnesses)
@@ -732,6 +637,7 @@ def genetic_algorithm(project, time_limit=25):
 
       generation += 1
 
+      # diversity restart if search stalls
       elapsed = time.time() - start_time
       stalled_for = time.time() - last_improvement_time
       stalled = (
@@ -749,7 +655,6 @@ def genetic_algorithm(project, time_limit=25):
         if not can_restart:
           break
 
-        # Diversification restart: refresh population to escape local optima.
         restart_count += 1
         no_improve_generations = 0
         last_improvement_time = time.time()
@@ -778,72 +683,12 @@ def genetic_algorithm(project, time_limit=25):
             no_improve_generations = 0
 
     if best_schedule is None:
-      # Hard fallback to guarantee we return a schedule.
       fallback = order_by_lft(project)
       best_schedule = ssgs(project, fallback)
 
     return best_schedule
 
 
-# ========================================
-# SIMULATED ANNEALING (alternative)
-# ========================================
-
-def simulated_annealing(project, time_limit=25):
-    """
-    SA is simpler to implement than GA — good fallback if GA is too complex.
-
-    idea:
-      1. start with a random activity list
-      2. make a small change (swap two activities)
-      3. if the new schedule is better, keep it
-      4. if worse, keep it with some probability (that decreases over time)
-      5. repeat until time runs out
-
-    the "cooling schedule" controls how quickly we stop accepting worse solutions.
-    start with high temperature (accept almost anything) and cool down gradually.
-
-    TODO: implement — this is an alternative to GA, pick whichever one works better
-    """
-    # start_time = time.time()
-    # current = random_activity_list(project)
-    # current_sched = ssgs(project, current)
-    # current_ms = get_makespan(project, current_sched)
-    # best_schedule = current_sched
-    # best_makespan = current_ms
-    #
-    # temperature = 10.0   # starting temp — tune this
-    # cooling_rate = 0.995 # how fast to cool — tune this
-    #
-    # while time.time() - start_time < time_limit:
-    #     # make a neighbor by swapping two random adjacent activities
-    #     neighbor = current[:]
-    #     i = random.randint(0, len(neighbor) - 2)
-    #     neighbor[i], neighbor[i+1] = neighbor[i+1], neighbor[i]
-    #
-    #     if not is_precedence_feasible(project, neighbor):
-    #         continue
-    #
-    #     neighbor_sched = ssgs(project, neighbor)
-    #     neighbor_ms = get_makespan(project, neighbor_sched)
-    #
-    #     delta = neighbor_ms - current_ms
-    #     if delta < 0 or random.random() < math.exp(-delta / temperature):
-    #         current = neighbor
-    #         current_ms = neighbor_ms
-    #         current_sched = neighbor_sched
-    #
-    #     if current_ms < best_makespan:
-    #         best_makespan = current_ms
-    #         best_schedule = current_sched
-    #
-    #     temperature *= cooling_rate
-    #
-    # return best_schedule
-    pass
-
-
-# quick test
 if __name__ == "__main__":
     from parser import parse
     import os

@@ -1,29 +1,12 @@
-"""
-PERSON 4: Validator & Testing
-==============================
-this module checks if a schedule is actually valid — no cheating lah.
-
-two things to verify:
-  1. precedence: for every edge i->j, S_j >= S_i + d_i
-  2. resources: at every time step t, total resource usage <= capacity
-
-also handles batch testing across all instances.
-"""
-
 import os
 import sys
 import re
 from models import Project
 
 
+# check all precedence constraints.
+# for each i -> j: start_j must be >= start_i + duration_i
 def check_precedence(project, schedule):
-    """
-    check all precedence constraints.
-    for each edge i -> j:
-        S_j must be >= S_i + d_i
-
-    returns a list of violation strings. empty list = all good.
-    """
     violations = []
 
     for act_id in project.all_ids():
@@ -38,31 +21,25 @@ def check_precedence(project, schedule):
     return violations
 
 
+# check resource constraints at every time step t.
 def check_resources(project, schedule):
-    """
-    check resource constraints at every time step.
-
-    approach:
-      1. figure out which activities are running at each time step
-         (activity i runs during [S_i, S_i + d_i))
-      2. sum up resource usage at each time step
-      3. check against capacity
-
-    returns a list of violation strings. empty list = all good.
-    """
     violations = []
 
+    # get the total length of the project
     max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
 
+    # scan every time step
     for t in range(max_time):
         usage = [0] * project.k
         for act_id in project.all_ids():
             s = schedule[act_id]
             d = project.activities[act_id].duration
+            # if activity is running at time t, add its resource needs
             if s <= t < s + d:
                 for r in range(project.k):
                     usage[r] += project.activities[act_id].resources[r]
 
+        # check usage against max capacity
         for r in range(project.k):
             if usage[r] > project.capacities[r]:
                 violations.append(
@@ -73,13 +50,11 @@ def check_resources(project, schedule):
     return violations
 
 
+# run all checks to make sure the schedule is valid
 def validate(project, schedule):
-    """
-    run all checks on a schedule. returns (is_valid, list_of_violations).
-    """
     violations = []
 
-    # basic sanity check — make sure every activity has a start time
+    # must have a start time for every activity
     for act_id in project.all_ids():
         if act_id not in schedule:
             violations.append(f"MISSING: activity {act_id} has no start time")
@@ -87,39 +62,24 @@ def validate(project, schedule):
     if violations:
         return False, violations
 
-    # check constraints
     violations += check_precedence(project, schedule)
     violations += check_resources(project, schedule)
 
     return len(violations) == 0, violations
 
 
+# makespan = start time of the end dummy task
 def compute_makespan(project, schedule):
-    """makespan = start time of the dummy end activity."""
     end_id = project.n + 1
     return schedule.get(end_id, -1)
 
 
-# ========================================
-# BATCH TESTING
-# ========================================
-
+# run every .SCH file in a folder and show performance
 def test_all_instances(folder, solver_fn):
-    """
-    run the solver on every .SCH file in a folder and report results.
-
-    solver_fn: a function that takes a filepath and returns a (project, schedule) tuple
-
-    TODO: implement — this should:
-      1. find all .SCH files in the folder
-      2. for each file, run the solver
-      3. validate the schedule
-      4. print a summary (makespan, valid/invalid, time taken)
-      5. at the end, print aggregate stats (avg makespan, num valid, etc.)
-    """
     from parser import parse
     import time
 
+    # helper to sort files by number (PSP1, PSP2, ..., PSP10)
     def natural_psp_key(name):
         stem = os.path.splitext(name)[0]
         m = re.search(r"([0-9]+)$", stem)
@@ -134,6 +94,7 @@ def test_all_instances(folder, solver_fn):
     num_valid = 0
     total_makespan = 0
 
+    # progress bar for CLI
     def render_progress(done, total, label):
         width = 28
         filled = int(width * done / max(1, total))
@@ -188,8 +149,8 @@ def test_all_instances(folder, solver_fn):
     return results
 
 
-# quick test
 if __name__ == "__main__":
+    # simple test block
     from parser import parse
     from scheduler import ssgs, order_by_id
 

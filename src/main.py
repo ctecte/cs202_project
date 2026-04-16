@@ -1,15 +1,3 @@
-"""
-PERSON 5: Main entry point + integration
-==========================================
-ties everything together — parse the file, run the optimizer,
-validate the result, print the schedule.
-
-usage:
-  python main.py <path_to_sch_file>
-  python main.py ../sm_j10/PSP1.SCH
-  python main.py --batch ../sm_j10/          (run all instances in folder)
-"""
-
 import sys
 import os
 import time
@@ -45,7 +33,6 @@ APPROACH_LABELS = {
 
 
 def _extract_workers(argv):
-    """Read optional --workers N from argv, fallback to default on invalid input."""
     if "--workers" not in argv:
         return DEFAULT_WORKERS
     idx = argv.index("--workers")
@@ -58,7 +45,6 @@ def _extract_workers(argv):
 
 
 def _extract_time_budget(argv):
-    """Read optional --time-budget seconds from argv."""
     if "--time-budget" not in argv:
         return TIME_BUDGET
     idx = argv.index("--time-budget")
@@ -71,7 +57,6 @@ def _extract_time_budget(argv):
 
 
 def _extract_approach(argv):
-    """Read optional --approach value."""
     if "--approach" not in argv:
         return "ga"
     idx = argv.index("--approach")
@@ -95,7 +80,6 @@ def _extract_approach(argv):
 
 
 def _worker_optimize(task):
-    """Independent portfolio worker with its own random seed."""
     filepath, seed, time_budget, approach = task
     random.seed(seed)
 
@@ -109,10 +93,6 @@ def _worker_optimize(task):
 
 
 def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
-    """
-    full pipeline: parse -> check feasibility -> optimize -> return best schedule.
-    this is what gets called for each instance.
-    """
     project = parse(filepath)
 
     # Bail out immediately if any activity exceeds resource capacity.
@@ -146,10 +126,8 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
                     best_schedule = optimized
                     best_makespan = opt_makespan
         except Exception:
-            # Keep baseline schedule on optimizer failure to preserve CLI behavior.
             pass
     else:
-        # Portfolio restarts: multiple random seeds in parallel, keep the best result.
         base_seed = int(time.time() * 1000) % 1_000_000_007
         tasks = [(filepath, base_seed + i * 9973, time_budget, approach) for i in range(workers)]
         try:
@@ -164,7 +142,6 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
                 f"[warn] multiprocessing portfolio failed on {os.path.basename(filepath)}: {e}; falling back to single worker",
                 file=sys.stderr,
             )
-            # Fallback if multiprocessing fails in current environment.
             try:
                 if approach == "alns":
                     optimized = alns_optimize(project, time_limit=time_budget)
@@ -182,7 +159,6 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
 
 
 def print_schedule(project, schedule):
-    """pretty print the schedule."""
     print(f"\n{'='*50}")
     print(f"{'Activity':<12} {'Start':<8} {'Duration':<10} {'Finish':<8}")
     print(f"{'='*50}")
@@ -217,7 +193,6 @@ def main():
     approach = _extract_approach(sys.argv)
 
     if sys.argv[1] == "--batch":
-        # batch mode — run all instances in a folder
         folder = sys.argv[2] if len(sys.argv) > 2 else "../sm_j10"
         print(
             f"batch config: workers={workers}, time_budget={time_budget:.2f}s, approach={approach} ({APPROACH_LABELS.get(approach, approach)})",
@@ -228,7 +203,6 @@ def main():
             lambda fp: solve(fp, workers=workers, time_budget=time_budget, approach=approach),
         )
     else:
-        # single instance mode
         filepath = sys.argv[1]
         start = time.time()
 
@@ -236,16 +210,13 @@ def main():
         elapsed = time.time() - start
 
         if schedule is None:
-            # Submission format: print -1 for infeasible instances
             print("-1")
             print(f"infeasible (activity resource demand exceeds capacity)", file=sys.stderr)
             print(f"time: {elapsed:.2f}s", file=sys.stderr)
         else:
-            # Submission format: comma-separated start times for activities 1..N
             start_times = [str(schedule[i]) for i in range(1, project.n + 1)]
             print(", ".join(start_times))
 
-            # Everything else goes to stderr so it doesn't interfere with grading
             valid, violations = validate(project, schedule)
             makespan = compute_makespan(project, schedule)
             print(f"makespan={makespan} valid={valid} time={elapsed:.2f}s", file=sys.stderr)
