@@ -26,7 +26,7 @@ from validator import validate, compute_makespan, test_all_instances
 
 
 TIME_BUDGET = 28  # seconds — leave 2s buffer from the 30s limit
-DEFAULT_WORKERS = min(4, mp.cpu_count())
+DEFAULT_WORKERS = 4 if mp.cpu_count() >= 4 else 1
 
 APPROACH_LABELS = {
     "topo_seq": "Topological Sequential Baseline (precedence-only)",
