@@ -180,11 +180,14 @@ def precedence_feasible_order(project, priority_key=None):
 
 def order_by_id(project):
     # 1 2 3 4 5 ,, n
+    # not used in the actual solver, kept for testing/debugging
     return precedence_feasible_order(project, priority_key=lambda aid: aid)
 
 
 def order_by_duration(project):
-    # shortest processing time (SPT) first 
+    # shortest processing time (SPT) first
+    # not used — SPT works well for single machine scheduling but doesnt account for
+    # resource contention or dependency structure, so LFT/MTS/GRPW outperform it on RCPSP
     return precedence_feasible_order(project, priority_key=lambda aid: project.activities[aid].duration)
 
 
