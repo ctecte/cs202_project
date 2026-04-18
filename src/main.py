@@ -25,7 +25,7 @@ from optimizer import genetic_algorithm, alns_optimize
 from validator import validate, compute_makespan, test_all_instances
 
 
-TIME_BUDGET = 28  # seconds — leave 2s buffer from the 30s limit
+TIME_BUDGET = 28  # seconds, leave 2s buffer from the 30s limit
 DEFAULT_WORKERS = min(4, mp.cpu_count() or 1)
 
 APPROACH_LABELS = {
@@ -207,7 +207,7 @@ def main():
     approach = _extract_approach(sys.argv)
 
     if sys.argv[1] == "--batch":
-        # batch mode — run all instances in a folder
+        # batch mode, run all instances in a folder
         folder = sys.argv[2] if len(sys.argv) > 2 else "../sm_j10"
         print(
             f"batch config: workers={workers}, time_budget={time_budget:.2f}s, approach={approach} ({APPROACH_LABELS.get(approach, approach)})",

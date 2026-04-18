@@ -34,7 +34,7 @@ makespan=25 valid=True time=28.00s
 workers=4 approach=alns (Adaptive Large Neighborhood Search + SSGS Decoder)
 0, 0, 3, 0, 6, 10, 15, 10, 15, 6
 ```
-The extra info (makespan, valid, time, approach) goes to stderr. The grader only reads stdout so it never sees those lines — they are just for us to check correctness during development.
+The extra info (makespan, valid, time, approach) goes to stderr. The grader only reads stdout so it never sees those lines, they are just for us to check correctness during development.
 
 ## Requirements
 

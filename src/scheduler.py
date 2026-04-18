@@ -186,14 +186,14 @@ def order_by_id(project):
 
 def order_by_duration(project):
     # shortest processing time (SPT) first
-    # not used — SPT works well for single machine scheduling but doesnt account for
+    # not used. SPT works well for single machine scheduling but doesnt account for
     # resource contention or dependency structure, so LFT/MTS/GRPW outperform it on RCPSP
     return precedence_feasible_order(project, priority_key=lambda aid: project.activities[aid].duration)
 
 
 def order_by_successors(project):
     """
-    most total successors first — the idea is activities with more
+    most total successors first, the idea is activities with more
     downstream dependencies are more "important" and should go first.
     TODO: count total successors (not just direct, but transitive) for each activity
           then sort descending

@@ -56,7 +56,7 @@ def validate(project, schedule):
     # run precedence and resource checks, returns (is_valid, list of violations)
     violations = []
 
-    # basic sanity check — make sure every activity has a start time
+    # basic sanity check, make sure every activity has a start time
     for act_id in project.all_ids():
         if act_id not in schedule:
             violations.append(f"MISSING: activity {act_id} has no start time")
@@ -142,7 +142,7 @@ def test_all_instances(folder, solver_fn):
         except Exception as e:
             elapsed = time.time() - start
             results.append((filename, -1, elapsed, f"ERROR: {e}"))
-            print(f"  [{idx}/{total}] {filename}: ERROR — {e}")
+            print(f"  [{idx}/{total}] {filename}: ERROR: {e}")
             render_progress(idx, total, filename)
 
     print(file=sys.stderr)
