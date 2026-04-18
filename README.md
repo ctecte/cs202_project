@@ -14,8 +14,6 @@ Resource-Constrained Project Scheduling Problem solver submitted for CS202.
 
 ## Run Command
 
-Per the submission guidelines, the grader runs our solver like this:
-
 ```
 python src/main.py <path_to_sch_file>
 ```
@@ -27,7 +25,7 @@ python src/main.py sm_j10/PSP1.SCH
 
 The program reads one `.SCH` instance file and prints the start times of activities 1 through N to stdout, comma separated. If the instance is infeasible (eg. some activity needs more of a resource than the total capacity), it prints `-1`.
 
-Output matches the format from the project guidelines, eg:
+example output
 ```
 0, 0, 0, 6, 1, 4, 9, 9, 18, 20
 ```
@@ -36,8 +34,8 @@ Everything else (makespan, validity, timing info) is sent to stderr so it does n
 
 ## Requirements
 
-- Python 3.8 or later (we used 3.12)
-- Standard library only, no external optimisation libraries like OR-Tools or Gurobi
+- Python 3
+- Standard library only
 - Runs within the 30 second time limit per instance
 
 No `pip install` needed for the solver itself.
@@ -69,7 +67,7 @@ python src/main.py <file.SCH> --workers <num_workers>
 python src/main.py --batch <folder>
 ```
 
-Default is `--approach ga` with a 28 second time budget (2 second safety margin from the 30s hard limit).
+Default is `--approach ALNS` with a 28 second time budget (2 second safety margin from the 30s hard limit).
 
 ## How It Works (Short Version)
 
