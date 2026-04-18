@@ -66,7 +66,7 @@ def _extract_time_budget(argv):
 def _extract_approach(argv):
     # parse --approach value from argv, supports aliases like "genetic" -> "ga"
     if "--approach" not in argv:
-        return "ga"
+        return "alns"
     idx = argv.index("--approach")
     if idx + 1 >= len(argv):
         return "ga"
