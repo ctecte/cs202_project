@@ -1,14 +1,6 @@
-"""
-PERSON 4: Validator & Testing
-==============================
-this module checks if a schedule is actually valid — no cheating lah.
-
-two things to verify:
-  1. precedence: for every edge i->j, S_j >= S_i + d_i
-  2. resources: at every time step t, total resource usage <= capacity
-
-also handles batch testing across all instances.
-"""
+# validator: checks if a schedule is actually valid
+# two things to check: precedence constraints and resource constraints at every time step
+# also handles batch testing across all instances
 
 import os
 import sys
@@ -17,13 +9,8 @@ from models import Project
 
 
 def check_precedence(project, schedule):
-    """
-    check all precedence constraints.
-    for each edge i -> j:
-        S_j must be >= S_i + d_i
-
-    returns a list of violation strings. empty list = all good.
-    """
+    # for every edge i->j, check that S_j >= S_i + d_i
+    # returns list of violation strings, empty means all good
     violations = []
 
     for act_id in project.all_ids():
@@ -39,17 +26,9 @@ def check_precedence(project, schedule):
 
 
 def check_resources(project, schedule):
-    """
-    check resource constraints at every time step.
-
-    approach:
-      1. figure out which activities are running at each time step
-         (activity i runs during [S_i, S_i + d_i))
-      2. sum up resource usage at each time step
-      3. check against capacity
-
-    returns a list of violation strings. empty list = all good.
-    """
+    # at every time step, sum up resource usage across all running activities
+    # check that none exceed capacity
+    # returns list of violation strings, empty means all good
     violations = []
 
     max_time = max(schedule[i] + project.activities[i].duration for i in project.all_ids())
@@ -74,9 +53,7 @@ def check_resources(project, schedule):
 
 
 def validate(project, schedule):
-    """
-    run all checks on a schedule. returns (is_valid, list_of_violations).
-    """
+    # run precedence and resource checks, returns (is_valid, list of violations)
     violations = []
 
     # basic sanity check — make sure every activity has a start time
@@ -95,7 +72,7 @@ def validate(project, schedule):
 
 
 def compute_makespan(project, schedule):
-    """makespan = start time of the dummy end activity."""
+    # makespan = start time of the dummy end activity
     end_id = project.n + 1
     return schedule.get(end_id, -1)
 
@@ -105,18 +82,9 @@ def compute_makespan(project, schedule):
 # ========================================
 
 def test_all_instances(folder, solver_fn):
-    """
-    run the solver on every .SCH file in a folder and report results.
-
-    solver_fn: a function that takes a filepath and returns a (project, schedule) tuple
-
-    TODO: implement — this should:
-      1. find all .SCH files in the folder
-      2. for each file, run the solver
-      3. validate the schedule
-      4. print a summary (makespan, valid/invalid, time taken)
-      5. at the end, print aggregate stats (avg makespan, num valid, etc.)
-    """
+    # run solver on every .SCH file in the folder
+    # prints makespan, valid/invalid, time taken per instance
+    # prints aggregate stats at the end
     from parser import parse
     import time
 

@@ -1,14 +1,7 @@
-"""
-PERSON 5: Main entry point + integration
-==========================================
-ties everything together — parse the file, run the optimizer,
-validate the result, print the schedule.
-
-usage:
-  python main.py <path_to_sch_file>
-  python main.py ../sm_j10/PSP1.SCH
-  python main.py --batch ../sm_j10/          (run all instances in folder)
-"""
+# main entry point: parse the file, run the optimizer, print the schedule
+# usage:
+#   python main.py <path_to_sch_file>
+#   python main.py --batch <folder>    (run all instances in folder)
 
 import sys
 import os
@@ -45,7 +38,7 @@ APPROACH_LABELS = {
 
 
 def _extract_workers(argv):
-    """Read optional --workers N from argv, fallback to default on invalid input."""
+    # parse --workers N from argv, falls back to default if missing or invalid
     if "--workers" not in argv:
         return DEFAULT_WORKERS
     idx = argv.index("--workers")
@@ -58,7 +51,7 @@ def _extract_workers(argv):
 
 
 def _extract_time_budget(argv):
-    """Read optional --time-budget seconds from argv."""
+    # parse --time-budget seconds from argv
     if "--time-budget" not in argv:
         return TIME_BUDGET
     idx = argv.index("--time-budget")
@@ -71,7 +64,7 @@ def _extract_time_budget(argv):
 
 
 def _extract_approach(argv):
-    """Read optional --approach value."""
+    # parse --approach value from argv, supports aliases like "genetic" -> "ga"
     if "--approach" not in argv:
         return "ga"
     idx = argv.index("--approach")
@@ -95,7 +88,7 @@ def _extract_approach(argv):
 
 
 def _worker_optimize(task):
-    """Independent portfolio worker with its own random seed."""
+    # single worker for multiprocessing portfolio, each gets a different random seed
     filepath, seed, time_budget, approach = task
     random.seed(seed)
 
@@ -109,10 +102,7 @@ def _worker_optimize(task):
 
 
 def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
-    """
-    full pipeline: parse -> check feasibility -> optimize -> return best schedule.
-    this is what gets called for each instance.
-    """
+    # full pipeline: parse -> feasibility check -> optimize -> return best schedule
     project = parse(filepath)
 
     # Bail out immediately if any activity exceeds resource capacity.
@@ -182,7 +172,7 @@ def solve(filepath, workers=1, time_budget=TIME_BUDGET, approach="ga"):
 
 
 def print_schedule(project, schedule):
-    """pretty print the schedule."""
+    # print schedule in a readable table format
     print(f"\n{'='*50}")
     print(f"{'Activity':<12} {'Start':<8} {'Duration':<10} {'Finish':<8}")
     print(f"{'='*50}")
