@@ -1,12 +1,4 @@
-"""
-Experiment runner for RCPSP project report requirements.
-
-Outputs:
-- per-run CSV with solution quality + runtime
-- aggregate CSV by approach
-- machine specs JSON
-- short markdown summary
-"""
+# experiment runner: runs solver across all instances and exports results to CSV, JSON, and markdown
 
 import argparse
 import csv
@@ -196,7 +188,7 @@ def write_csv(path, rows, fieldnames):
 
 
 def render_markdown_table(headers, rows, right_align_cols=None):
-    """Render a markdown table with aligned source formatting."""
+    # render a markdown table with aligned columns
     right_align_cols = set(right_align_cols or [])
     widths = [len(str(h)) for h in headers]
     str_rows = [[str(cell) for cell in row] for row in rows]

@@ -726,21 +726,7 @@ def genetic_algorithm(project, time_limit=25):
 # ========================================
 
 def simulated_annealing(project, time_limit=25):
-    """
-    SA is simpler to implement than GA, good fallback if GA is too complex.
-
-    idea:
-      1. start with a random activity list
-      2. make a small change (swap two activities)
-      3. if the new schedule is better, keep it
-      4. if worse, keep it with some probability (that decreases over time)
-      5. repeat until time runs out
-
-    the "cooling schedule" controls how quickly we stop accepting worse solutions.
-    start with high temperature (accept almost anything) and cool down gradually.
-
-    not used, we went with ALNS instead which performs better
-    """
+    # SA alternative to GA, not used since we went with ALNS which performs better
     # start_time = time.time()
     # current = random_activity_list(project)
     # current_sched = ssgs(project, current)

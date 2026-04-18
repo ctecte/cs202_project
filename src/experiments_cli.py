@@ -1,12 +1,5 @@
-"""
-Interactive CLI launcher for RCPSP experiments.
-
-This script asks:
-1) which algorithms to include,
-2) how many runs per algorithm,
-3) workers per algorithm run,
-then executes all runs and exports consolidated artifacts.
-"""
+# interactive CLI to pick which algorithms to run, how many runs, and how many workers
+# then executes all runs and exports results
 
 import datetime as dt
 import json
