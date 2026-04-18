@@ -14,23 +14,27 @@ Resource-Constrained Project Scheduling Problem solver submitted for CS202.
 
 ## Run Command
 
+**For grading / clean output only (what the grader sees):**
 ```
-python src/main.py <path_to_sch_file>
+python3 src/main.py sm_j10/PSP1.SCH 2>/dev/null
 ```
+Example output:
+```
+0, 0, 3, 0, 6, 10, 15, 10, 15, 6
+```
+Just the comma-separated start times for activities 1 through N. If infeasible, prints `-1`.
 
-Example:
+**For development / full info (makespan, validity, timing):**
 ```
-python src/main.py sm_j10/PSP1.SCH
+python3 src/main.py sm_j10/PSP1.SCH
 ```
-
-The program reads one `.SCH` instance file and prints the start times of activities 1 through N to stdout, comma separated. If the instance is infeasible (eg. some activity needs more of a resource than the total capacity), it prints `-1`.
-
-example output
+Example output:
 ```
-0, 0, 0, 6, 1, 4, 9, 9, 18, 20
+makespan=25 valid=True time=28.00s
+workers=4 approach=alns (Adaptive Large Neighborhood Search + SSGS Decoder)
+0, 0, 3, 0, 6, 10, 15, 10, 15, 6
 ```
-
-Everything else (makespan, validity, timing info) is sent to stderr so it does not interfere with the grader.
+The extra info (makespan, valid, time, approach) goes to stderr. The grader only reads stdout so it never sees those lines — they are just for us to check correctness during development.
 
 ## Requirements
 
