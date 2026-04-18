@@ -6,11 +6,11 @@ Resource-Constrained Project Scheduling Problem solver submitted for CS202.
 
 | Name | Student ID |
 | ---- | ---------- |
-| [TODO] | [TODO] |
-| [TODO] | [TODO] |
-| [TODO] | [TODO] |
-| [TODO] | [TODO] |
-| [TODO] | [TODO] |
+| CHRISTOPHER TJANDRA | 01466084 |
+| ONG JIAN RONG CALVIN | 01469754 |
+| TAN YONG HAO JEREMY | 01506688 |
+| WAI HOI | 01461175 |
+| MOHAMED SHAIK AZEEZ | 01511156 |
 
 ## Run Command
 
