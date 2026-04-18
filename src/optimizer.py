@@ -377,15 +377,13 @@ def alns_optimize(project, time_limit=25):
     start = time.time()
     deadline = start + time_limit
 
-    # Initial seed: deterministic priority rules + random topological orders.
+    # initial seeds: the 3 deterministic priority rules, best of these becomes starting point
     lft_values = _compute_lft_values(project)
     seeds = [
       order_by_lft(project),
       order_by_successors(project),
       order_by_grpw(project),
     ]
-    for _ in range(2):
-      seeds.append(random_activity_list(project))
 
     best_order = None
     best_schedule = None
