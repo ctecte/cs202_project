@@ -739,7 +739,7 @@ def simulated_annealing(project, time_limit=25):
     the "cooling schedule" controls how quickly we stop accepting worse solutions.
     start with high temperature (accept almost anything) and cool down gradually.
 
-    TODO: implement, this is an alternative to GA, pick whichever one works better
+    not used, we went with ALNS instead which performs better
     """
     # start_time = time.time()
     # current = random_activity_list(project)

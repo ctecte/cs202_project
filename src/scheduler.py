@@ -192,12 +192,7 @@ def order_by_duration(project):
 
 
 def order_by_successors(project):
-    """
-    most total successors first, the idea is activities with more
-    downstream dependencies are more "important" and should go first.
-    TODO: count total successors (not just direct, but transitive) for each activity
-          then sort descending
-    """
+    # most total successors first, activities with more downstream dependencies go first
     # most total successors (MTS) ie which activity has the most people depending on it
     # this includes chain dependencies (if C needs B, and B needs A, then C needs A)
     memo = {}
