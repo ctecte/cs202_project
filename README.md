@@ -14,7 +14,7 @@ Resource-Constrained Project Scheduling Problem solver submitted for CS202.
 
 ## Run Command
 
-**For grading / clean output only (what the grader sees):**
+**For grading / clean output only:**
 ```
 python3 src/main.py sm_j10/PSP1.SCH 2>/dev/null
 ```
