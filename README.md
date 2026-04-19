@@ -85,7 +85,7 @@ Optimiser makes use of multithreading - up to 4 threads min(4, cpu_count)
 
 ## Results Summary
 
-Full numbers are in `results_aggregate.csv` and `summary.md`. Averaged over 270 instances per dataset (excluding infeasible):
+Full numbers are in `experiments/results_aggregate.csv` and `experiments/summary.md`. Averaged over 270 instances per dataset (excluding infeasible):
 
 | Approach | J10 avg makespan | J20 avg makespan |
 | -------- | ---------------: | ---------------: |
