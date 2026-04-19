@@ -34,7 +34,7 @@ makespan=25 valid=True time=28.00s
 workers=4 approach=alns (Adaptive Large Neighborhood Search + SSGS Decoder)
 0, 0, 3, 0, 6, 10, 15, 10, 15, 6
 ```
-The extra info (makespan, valid, time, approach) goes to stderr. The grader only reads stdout so it never sees those lines, they are just for us to check correctness during development.
+The extra info (makespan, valid, time, approach) goes to stderr.
 
 ## Requirements
 
@@ -42,7 +42,7 @@ The extra info (makespan, valid, time, approach) goes to stderr. The grader only
 - Standard library only
 - Runs within the 30 second time limit per instance
 
-No `pip install` needed for the solver itself.
+No `pip install` needed.
 
 ## Repository Structure
 
@@ -61,8 +61,6 @@ summary.md        formatted summary of experiment runs
 ```
 
 ## Optional Flags
-
-These are not part of the grader command but useful for us during development:
 
 ```
 python src/main.py <file.SCH> --approach <ga|alns|lft_ssgs|id_ssgs|topo_seq>
