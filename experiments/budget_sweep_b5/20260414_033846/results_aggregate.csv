@@ -1,3 +1,0 @@
-folder,approach,approach_name,instances,valid_count,invalid_count,avg_runtime_sec,avg_makespan_valid
-sm_j20,alns,Adaptive Large Neighborhood Search + SSGS Decoder,10,10,0,5.0704,57.8
-sm_j20,ga,Genetic Algorithm + SSGS Decoder,10,10,0,0.5714,59.1
