@@ -56,8 +56,6 @@ src/
   validator.py    precedence and resource constraint checks, batch testing
 sm_j10/           270 J10 benchmark instances (10 real activities each)
 sm_j20/           270 J20 benchmark instances (20 real activities each)
-results_aggregate.csv   raw benchmark numbers from our experiments
-summary.md        formatted summary of experiment runs
 ```
 
 ## Optional Flags
