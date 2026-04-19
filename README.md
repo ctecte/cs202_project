@@ -81,6 +81,7 @@ Full details are in the report. Quick summary:
 SSGS (Serial Schedule Generation Scheme) is the core. Given any precedence-feasible activity list, it walks through the list and places each activity at the earliest time where all predecessors are done and resources are free. It always produces a valid schedule.
 
 The optimisers (GA and ALNS) only generate different activity lists. They never touch the schedule directly, so validity is always guaranteed by SSGS.
+Optimiser makes use of multithreading - up to 4 threads min(4, cpu_count)
 
 ## Results Summary
 
